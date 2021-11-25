@@ -1,0 +1,15 @@
+      **************************************************************************
+      *  Description:  EXPDTAMA -  Example application data by parent
+      *
+      *  Written for CAS by:  cs - November, 1989
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      **************************************************************************
+      *
+     A                                      ALTSEQ(QCASE256)
+     A          R DTAM                      PFILE(EXPDTAM)
+      *
+     A          K DMPRN
+     A          K DMCST
+

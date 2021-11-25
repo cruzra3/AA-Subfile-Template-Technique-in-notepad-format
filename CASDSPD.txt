@@ -1,0 +1,108 @@
+      *----------------------------------------------------------------***
+      *
+      *  Description:
+      *    File Information Data Structure - Display file
+      *
+      *    Notes: This data structure should be used with
+      *           display files. Filler fields
+      *           represent unused, reserved, database, or
+      *           printer file usage.
+      *
+      *           Fields WDFILF thru WDFIL4 are described in detail
+      *           on pages 2-20 thru 2-23 of the AS/400 Languages:
+      *           RPG/400 reference manual in folder 26.
+      *
+      *           Fields WDWRTC thru WDMOD are described in detail
+      *           on pages A-11 thru A-13 and A-14 thru A-17 of the
+      *           AS/400 Programming: Data Management Guide reference
+      *           manual in folder 15.
+      *
+      *    Note:  This data structure must be compiled (using CRTPF) with
+      *           the name CASDSPD as referenced in various programs within
+      *           the application.
+      *
+      *  Written for CAS by:
+      *   WMM         04/06/90
+      *
+      *  (c)Copyright 1990, 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *-------------------------------------------------------------------
+     A          R DSPD
+     A            WDFILF         8          COLHDG('File name' '(F spec)')
+     A            WDOPNS         1          COLHDG('Open Status' '1=open')
+     A            WDEOF          1          COLHDG('End of file status' '1=EOF')
+     A            WDSTS          5S 0       COLHDG('Status code')
+     A            WDOPRC         6          COLHDG('Operation code')
+     A            WDRTN          8          COLHDG('Routine')
+     A            WDSRCS         8          COLHDG('Source statement')
+     A            WDFMT          8          COLHDG('Record format' 'or ID')
+     A            WDMSGN         7          COLHDG('Message number')
+     A            WDODT          4          COLHDG('Obj definition' 'template')
+     A            WDFIL1        10          COLHDG('Filler')
+     A            WDSCRS         4S 0       COLHDG('Screen size')
+     A            WDINPC         2S 0       COLHDG('National language' +
+     A                                      'input capability')
+     A            WDOUTC         2S 0       COLHDG('National language' +
+     A                                      'output capability')
+     A            WDPRFL         2S 0       COLHDG('Preferred national' +
+     A                                      'language mode')
+     A            WDFIL          4          COLHDG('Filler')
+     A            WDODPT         2          COLHDG('ODP type' 'DS=Device')
+     A            WDFILN        10          COLHDG('File name')
+     A            WDFILL        10          COLHDG('File''s library')
+     A            WDFIL2        22          COLHDG('Filler')
+     A            WDRECL         2B 0       COLHDG('Record length')
+     A            WDFIL3        25          COLHDG('Filler')
+     A            WDROWS         2B 0       COLHDG('Number of rows')
+     A            WDCLMS         2B 0       COLHDG('Number of columns')
+     A            WDFIL4         7          COLHDG('Filler')
+     A            WDSRCF         1          COLHDG('Y=opened as' +
+     A                                      'source file')
+     A            WDUFCB        10          COLHDG('User file control' 'block')
+     A            WDUFCO        10          COLHDG('User file control' +
+     A                                      'block overides')
+     A            WDFIL5        57          COLHDG('Filler')
+     A            WDOFFS         2B 0       COLHDG('Offset to' 'feedback area')
+     A            WDWRTC         8B 0       COLHDG('Write operation' 'count' +
+     A                                      'in records or blocks')
+     A            WDREDC         8B 0       COLHDG('Read operation' 'count' +
+     A                                      'in records or blocks')
+     A            WDWRDC         8B 0       COLHDG('Write/Read operation' +
+     A                                      'count')
+     A            WDOTHC         8B 0       COLHDG('Other operation' 'count')
+     A            WDFIL6         1          COLHDG('Filler')
+     A            WDCRNO         1          COLHDG('Current operation' +
+     A                                      'code in hex')
+     A            WDLSTF        10          COLHDG('Name of record' +
+     A                                      'format just' 'processed')
+     A            WDDEVC         2          COLHDG('Device class' 'in hex')
+     A            WDDEVN        10          COLHDG('Device name')
+     A            WDLSTL         8B 0       COLHDG('Length of last' 'record' +
+     A                                      'processed')
+     A            WDFIL0        80          COLHDG('Filler')
+     A            WDFLGB         2          COLHDG('Flag bits')
+     A            WDATNB         1          COLHDG('Attention' 'indicator' +
+     A                                      'byte in hex')
+     A            WDCRSL         2          COLHDG('Cursor location' 'in hex')
+     A            WDACTL         8B 0       COLHDG('Actual data length')
+     A            WDSFLR         2B 0       COLHDG('Relative record' 'number' +
+     A                                      'of subfile')
+     A            WDLOWR         2B 0       COLHDG('Lowest subfile' +
+     A                                      'relative record #' 'SEE MANUAL')
+     A            WDTOTR         2B 0       COLHDG('Total number of' 'records' +
+     A                                      'in subfile')
+     A            WDFIL7        19          COLHDG('Filler')
+     A            WDMAJR         2          COLHDG('Major return code')
+     A            WDMINR         2          COLHDG('Minor return code')
+     A            WDSNAR         8          COLHDG('SNA return code')
+     A            WDSAFI         1          COLHDG('Safe indicator' '0=no ETX' +
+     A                                      '1=ETX received')
+     A            WDFIL8         1          COLHDG('Filler')
+     A            WDRQSW         1          COLHDG('Remote system' 'request' +
+     A                                      'to write command')
+     A            WDFMTN        10          COLHDG('Record format' 'received' +
+     A                                      'from remote system')
+     A            WDFIL9         4          COLHDG('Filler')
+     A            WDMOD          8          COLHDG('Mode name')
+

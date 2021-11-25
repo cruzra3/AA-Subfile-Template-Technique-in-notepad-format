@@ -1,0 +1,156 @@
+      *___________________________________________________________________
+      *
+      *  Description:  PRCOPTV2 - Process options request - extended
+      *
+      *  Parameters:
+      *    RQS   - Request (BUILD, 2 character option code)
+      *    RTN   - Return code (ERROR, option action)
+      *    OPD   - Option display text (6x80)
+      *    OPT   - Options valid (30x2)
+      *    OPV   - Option table (option #/action code/description, 29x38)
+      *
+      *  Written for CAS by:  cs - December, 1989
+      *                       cs - August, 1990
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *___________________________________________________________________
+     E                    WAT        30 38               OPT#/ACTION/DESC TBL
+     E                    WAN        30  2               OPTION VALID TABLE
+     E                    WAE        30 15               OPTION DSC OUT
+     E                    WAI        30  2               OPTION COD OUT
+     E                    WAA        30 10               OPTION ACT OUT
+     E                    WAD         6 75               OPTION COD DESCR
+     E                    WIOPV      30  2               OPTION VALID
+     E                    WTM     1   1 80               PANEL MESSAGES
+      *___________________________________________________________________
+      *
+      * PROGRAM STATUS DATA STRUCTURE
+     IPSDS      ESDSPSDS
+      *
+      * OPTION DEFINITION TABLE - INPUT PARAMETER
+     IWIOPT       DS
+     I                                        11140 WAT
+      *
+      * OPTION DESCRIPTIONS - OUTPUT PARAMETER
+     IWOOPD       DS
+     I                                        1 450 WAD
+     I                                        1 450 WAE
+      *___________________________________________________________________
+      *
+      * DEFAULT PARAMETERS
+     C                     MOVE *BLANKS   WORTN            RETURN CODE
+     C                     MOVE *BLANKS   WOOPD            RESET DESCR
+      *
+      * PROCESS 'BUILD' REQUEST OR OPTION CODE REQUEST
+B001 C           WIRQS     IFEQ 'BUILD'                    IF BUILD
+ 001 C                     EXSR BLDOPT                     BLD OPT DESC
+X001 C                     ELSE                            END IF DISPLAY
+ 001 C                     EXSR BLDOPT                     BLD OPT DESC
+ 001 C                     EXSR PRCOPT                     PROCESS OPTION
+E001 C                     END                             END IF PROCESS
+      *
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * BUILD SCREEN OPTION DESCRIPTIONS
+      *___________________________________________________________________
+     C           BLDOPT    BEGSR                           BLD OPT DESCR
+     C                     MOVE *BLANKS   WAA              INIT ACTIONS
+     C                     MOVE *BLANKS   WAI              INIT DESC
+     C                     MOVELWAT       WAN              EXTRACT OPT #
+     C                     MOVE *BLANKS   WAE              INIT FNC DSC OUT
+     C                     Z-ADD0         WX      20       INIT INDEX
+      *
+B001 C                     DO   30        WW      20       DO WHILE OPTS
+B002 C           WIOPV,1   IFEQ 'I '                       IF INCLUDE
+ 002 C           WAN,WW    LOKUPWIOPV                    99LOOK IN VALID
+B003 C           *IN99     IFEQ '0'                        IF NOT INCLUDED
+ 003 C                     MOVE *BLANKS   WAN,WW           BLANK OPTION #
+E003 C                     END                             END IF NOT INCL
+E002 C                     END                             END IF INCLUDE
+ 001  *
+B002 C           WIOPV,1   IFEQ 'X '                       IF EXCLUDE
+ 002 C           WAN,WW    LOKUPWIOPV                    99LOOK IN VALID
+B003 C           *IN99     IFEQ '1'                        IF NOT EXCLUDED
+ 003 C                     MOVE *BLANKS   WAN,WW           BLANK OPT NBR
+E003 C                     END                             END IF NOT EXCL
+E002 C                     END                             END IF EXCLUDE
+ 001  *
+B002 C           WAN,WW    IFNE '  '                       IF OPTION NBR
+ 002 C                     ADD  1         WX               BUMP TO NEXT POS
+ 002 C                     MOVE WAT,WW    WWDSC2 15        EXTRACT DESC 2
+B003 C           WWDSC2    IFNE *BLANKS                    IF LONG DESCR
+B004 C           WX        IFEQ 05                         IF END OF LINE
+ 004 C           WX        OREQ 10                         IF END OF LINE
+ 004 C           WX        OREQ 15                         IF END OF LINE
+ 004 C           WX        OREQ 20                         IF END OF LINE
+ 004 C           WX        OREQ 25                         IF END OF LINE
+ 004 C                     ADD  1         WX               BUMP TO NEXT LINE
+E004 C                     END                             END IF END OF LINE
+E003 C                     END                             END IF LONG DESCR
+ 002  *
+B003 C           WX        IFLE 30                         IF LINES NOT FULL
+ 003 C                     MOVE WAT,WW    WWDSC  28        EXTRACT DESC
+ 003 C                     MOVELWWDSC     WAE,WX           EXTRACT DESC
+ 003 C                     MOVELWAT,WW    WAA,WX           EXTRACT ACTION
+ 003 C                     MOVELWAT,WW    WAI,WX           EXTRACT ACTION
+E003 C                     END                             END LINES NOT FULL
+B003 C           WWDSC2    IFNE *BLANKS                    IF LONG DESCR
+ 003 C           WX        ANDLT30                         IF LINES NOT FULL
+ 003 C                     ADD  1         WX               BUMP TO NEXT POS
+ 003 C                     MOVE WAT,WW    WWDSC3 13        EXTRACT DESC 2
+ 003 C                     MOVELWWDSC3    WAE,WX           EXTRACT DESC 2
+E003 C                     END                             END IF LONG DESCR
+E002 C                     END                             END IF OPT NBR
+E001 C                     END                             END DO OPTIONS
+      *
+     C                     ENDSR                           END BLD FNCTN
+      *___________________________________________________________________
+      * PROCESS OPTIONS
+      *___________________________________________________________________
+     C           PRCOPT    BEGSR                           PROCESS OPTIONS
+     C                     MOVELWIRQS     WWF     2        EXTRACT OPTION#
+     C                     Z-ADD1         WWN    150       STR LOOKUP AT 1
+     C           WWF       LOKUPWAI,WWN                  55LOOK FOR OPT #
+     C   55                MOVE WAA,WWN   WORTN            EXTRACT ACTION
+B001 C           WORTN     IFEQ *BLANKS                    IF NO OPTION
+ 001 C                     MOVEL'ERROR'   WORTN            THEN ERR RETURN
+ 001 C                     MOVEAWTM,1     WWMSG            PROVIDE MSG
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+E001 C                     END                             END IF NO OPT
+     C                     ENDSR                           END PROCESS OPT
+      *___________________________________________________________________
+      * SEND MESSAGE
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QSNDDTAQ'                 SEND MESSAGE
+     C                     PARM 'MSGDTAQ' WWDTAQ 10        DATA QUEUE NAME
+     C                     PARM 'QTEMP'   WWLIB  10        DATA QUEUE LIB
+     C                     PARM 80        WWLNGQ  50       MESSAGE LENGTH
+     C                     PARM           WWMSG  80        ERROR MESSAGE
+     C                     ENDSR                           END PROC FNC
+      *___________________________________________________________________
+      * PARAMETER LISTS USED BY THIS PROGRAM
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           PRCOPT LIST
+     C                     PARM           WIRQS   8        REQUEST
+     C                     PARM           WORTN   8        RETURN CODE
+     C                     PARM           WOOPD            OPTION DESCR
+     C                     PARM           WIOPT            OPTION TABLE
+     C                     PARM           WIOPV            OPTION VALID
+     C                     ENDSR
+      *___________________________________________________________________
+      * PROGRAM ERROR HANDLER
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+** WTM
+00Option is not valid.
+

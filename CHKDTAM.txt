@@ -1,0 +1,136 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  CHKDTAM - Check Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+      *  Parameters:
+      *    RQS - request (EDIT, EDTDLT, DFTDTA)
+      *    RTN - return code (blank, ERROR)
+      *    DTA - file data as a data structure
+      *    NOTE:  Error messages returned in data queue MSGDTAQ
+      *___________________________________________________________________
+      *
+      * \STRSRC FSPEC - Modification point for F specifications
+      * \ENDSRC FSPEC
+      *___________________________________________________________________
+      *
+     E                    WTMP    1   2 80               PROG ERR MSG TBL
+     E                    WTM     1  32 80               ERROR MESSAGE TBL
+      * \STRSRC ESPEC - Modification point for E specifications
+      * \ENDSRC ESPEC
+      *___________________________________________________________________
+      *
+      * EXPDTAM  data structure
+     IWUDTAM    E DSEXPDTAM
+      *
+      * Program status data structure
+     IPGMD      ESDSCASPGMD
+      *
+      * \STRSRC IDSSPEC - Modification point for I DS specifications
+      * \ENDSRC IDSSPEC
+      *___________________________________________________________________
+      * Process check request
+     C                     MOVE *BLANKS   WORTN            SET RETURN CODE
+     C           WIRQS     CASEQ'EDIT'    EDTRCD           EDIT RECORD
+     C           WIRQS     CASEQ'EDTDLT'  EDTDLT           EDIT DLT RQST
+     C           WIRQS     CASEQ'DFTDTA'  DFTDTA           DEFAULT DATA
+     C                     CAS            PRCERR           REQUEST ERROR
+     C                     ENDCS                           END CASE
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * Edit record
+      *___________________________________________________________________
+     C           EDTRCD    BEGSR                           EDIT RECORD
+     C                     EXSR DFTDTA                     DEFAULT DATA
+      *insert error logic based on the following template
+      *          *BLANKS   IFNE *BLANKS                    IF ERROR
+      *                    MOVE WTM,1     WWMSG            PASS MESSAGE
+      *                    EXSR SNDMSG                     SEND ERR MSG
+      *                    MOVEL'ERROR'   WORTN            SET ERROR RTRN
+      *                    ENDIF                           END IF ERROR
+      * \STRSRC EDIT - Modification point for edits
+      * \ENDSRC EDIT
+     C                     ENDSR                           END EDIT RECORD
+      *___________________________________________________________________
+      * Edit delete request
+      *___________________________________________________________________
+     C           EDTDLT    BEGSR                           EDIT DELETE RQS
+      *insert error logic based on the following template
+      *          *BLANKS   IFNE *BLANKS                    IF ERROR
+      *                    MOVE WTMP,1    WWMSG            PASS MESSAGE
+      *                    EXSR SNDMSG                     SEND ERROR MSG
+      *                    MOVEL'ERROR'   WORTN            SET ERROR RTRN
+      *                    ENDIF                           END IF ERROR
+      * \STRSRC DELETE - Modification point for delete edits
+      * \ENDSRC DELETE
+     C                     ENDSR                           END DLT RQST
+      *___________________________________________________________________
+      * Default data
+      *___________________________________________________________________
+     C           DFTDTA    BEGSR                           DEFAULT DATA
+      *insert default data logic for new records
+      * \STRSRC DEFAULT - Modification point for defaults
+      * \ENDSRC DEFAULT
+     C                     ENDSR                           END DFT DATA
+      *___________________________________________________________________
+      * Send messages
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND ERROR MSG
+     C                     CALL 'QSNDDTAQ'                 SEND ERROR
+     C                     PARM 'MSGDTAQ' WWDTAQ 10        DATA Q NAME
+     C                     PARM 'QTEMP'   WWLIB  10        DATA Q LIB
+     C                     PARM 80        WWLNGQ  50       MESSAGE LENGTH
+     C                     PARM           WWMSG  80        ERROR MESSAGE
+     C                     ENDSR                           END SND ERRMSG
+      *___________________________________________________________________
+      * Process error
+      *___________________________________________________________________
+     C           PRCERR    BEGSR                           PROCESS ERROR
+     C                     MOVE 'ERROR   'WORTN            REQUEST ERROR
+     C                     MOVE WTMP,2    WWMSG            PASS MSG
+     C                     EXSR SNDMSG                     SEND MSG
+     C                     ENDSR                           END PRCERR
+      *___________________________________________________________________
+      * Parameter list
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           *ENTRY LIST
+     C                     PARM           WIRQS   8        REQUEST
+     C                     PARM           WORTN   8        RETURN CODE
+     C                     PARM           WUDTAM           DATA
+     C                     ENDSR                           END PLIST
+      *___________________________________________________________________
+      * Define Variables and Key Lists
+      *___________________________________________________________________
+     C           DEFN      BEGSR                           PARM LISTS
+     C           *LIKE     DEFN WIRQS     WWRQS            REQUEST
+     C           *LIKE     DEFN WORTN     WWRTN            RETURN CODE
+     C                     MOVE WTM,1     WTM,1            DEFINE MSG TBL
+      * \STRSRC DEFN - Modification point for defines
+      * \ENDSRC DEFN
+     C                     ENDSR                           END DEFN
+      *___________________________________________________________________
+      * Program error handler
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+      * \STRSRC CSRSPEC - Modification point for subroutines
+      * \ENDSRC CSRSPEC
+      *___________________________________________________________________
+** WTMP
+00T-Record is not eligible for deletion.
+00Request not supported by program CHKDTAM
+** WTM  \STRSRC ERRTBL - Modification Point for error table
+

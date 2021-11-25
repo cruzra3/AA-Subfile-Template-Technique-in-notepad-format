@@ -1,0 +1,11 @@
+/*____________________________________________________________________________*/
+/*                                                                            */
+/*  Description:  CRTTMP - Create Template Objects                            */
+/*                                                                            */
+/*  (c)Copyright 1994 by Computer Applications Specialists, Inc.              */
+/*  This document contains restricted materials of CAS, Inc.                  */
+/*____________________________________________________________________________*/
+
+             CMD        PROMPT('Create Template Objects')
+
+

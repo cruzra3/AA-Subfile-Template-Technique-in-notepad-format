@@ -1,0 +1,87 @@
+/******************************************************************************/
+/*                                                                            */
+/*  Title:  SNDRPGM - Send RPG Exception Message                              */
+/*                                                                            */
+/*  Parameters:  Program, Status, Line, Message ID                            */
+/*                                                                            */
+/*  Written for CAS By:  cs / August 10, 1990                                 */
+/*                       BG 9/19/91                                           */
+/*                                                                            */
+/*  (c) Copyright 1994 by Computer Applications Specialists, Inc.  All rights */
+/*  reserved.  This member contains restricted materials of CAS, Inc.         */
+/******************************************************************************/
+             PGM        PARM(&PGMN &STSC &RPGS &MSGID)
+
+/* Declare Parameters */
+             DCL        VAR(&PGMN ) TYPE(*CHAR) LEN(10) /* program name */
+             DCL        VAR(&STSC ) TYPE(*CHAR) LEN( 5) /* status code  */
+             DCL        VAR(&RPGS ) TYPE(*CHAR) LEN( 8) /* RPG statement */
+             DCL        VAR(&MSGID) TYPE(*CHAR) LEN( 7) /* message ID   */
+
+/* Declare Variables */
+             DCL        &MSGTXT     *CHAR 70  /* message text */
+             DCL        VAR(&MSGDTAQ) TYPE(*CHAR) LEN(10) +
+                          VALUE(MSGDTAQ) /* message data queue */
+             DCL        VAR(&DTAQLIB) TYPE(*CHAR) LEN(10) +
+                          VALUE(QTEMP) /* data queue library */
+             DCL        VAR(&MSGLEN) TYPE(*DEC) LEN(5 0) VALUE(070) +
+                          /* message length */
+             DCL        VAR(&KEYVAR) TYPE(*CHAR) LEN(4)
+/* Monitor for unexpected messages */
+             MONMSG     MSGID(CPF0000 MCH0000) EXEC(GOTO ENDERR)
+
+/* Send messages to callers caller */
+
+/* Test &msgid for blanks. It can be blanks if an rpg execution    */
+/* error is encountered (divide by zero, array index error etc.).  */
+/* Therefore, build the appropiate rpg message from the QRPGMSGE   */
+/* message file. Note that a status message is a 5 character field */
+/* and that the associated message in QRPGMSGE is 'RPG' plus  4    */
+/* character. Hence the substring processing.                      */
+
+
+/* Msgid is non-blank, send cpf error message */
+             IF         COND(&MSGID *NE ' ') THEN(SNDPGMMSG +
+                          MSGID(&MSGID) MSGF(QCPFMSG) TOPGMQ(*PRV +
+                          &PGMN) MSGTYPE(*DIAG))
+
+/* Msgid is blank, send appropiate rpg message from rpgmsge file */
+             IF         COND(&MSGID *EQ ' ') THEN(DO)
+             CHGVAR     &MSGID VALUE('RPG' *CAT %SST(&STSC 2 4))
+             SNDPGMMSG  MSGID(&MSGID) MSGF(QRPGMSGE) TOPGMQ(*PRV +
+                          &PGMN) MSGTYPE(*DIAG) KEYVAR(&KEYVAR)
+             ENDDO
+
+             CHGVAR     VAR(&MSGTXT) VALUE('Program exception ' +
+                          *CAT &STSC *BCAT 'detected by ' *CAT +
+                          &PGMN *BCAT 'at line ' *CAT &RPGS)
+             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA(&MSGTXT) +
+                          TOPGMQ(*PRV &PGMN) MSGTYPE(*DIAG) +
+                          KEYVAR(&KEYVAR)
+
+/* Send message to application message data queue */
+             CHGVAR     VAR(&MSGTXT) VALUE('00' *CAT &PGMN *BCAT 'ended in +
+                          error.')
+             CALL       PGM(QSNDDTAQ) PARM(&MSGDTAQ &DTAQLIB &MSGLEN +
+                          &MSGTXT)
+             MONMSG     CPF0000
+
+             CHGVAR     VAR(&MSGTXT) VALUE('00Program exception ' +
+                          *CAT &STSC *BCAT 'detected by ' *CAT +
+                          &PGMN *BCAT 'at line ' *CAT &RPGS)
+             CALL       PGM(QSNDDTAQ) PARM(&MSGDTAQ &DTAQLIB &MSGLEN +
+                          &MSGTXT)
+             MONMSG     CPF0000
+
+/* Return to caller */
+ RETURN:     RETURN     /* normal completion */
+
+/* Error handler */
+ ENDERR:     SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA('SNDRPGM +
+                          detected an error condition.  Processing +
+                          ended abnormally') TOPGMQ(*PRV *) +
+                          MSGTYPE(*ESCAPE) /* send escape message */
+             MONMSG     MSGID(CPF0000 MCH0000) /* avoid error loop */
+             ENDPGM
+
+

@@ -1,0 +1,553 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  SLCDTAM - Select from Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+      *  Parameters:
+      *    RQS - Request (SLCNXT, cursor position - 2.0B)
+      *    RTN - Return code (EXIT,CANCEL,ERROR,blank)
+      *    PGM - Last program to output to screen
+      *    KEY - Key data
+      *_________________________________________________________________________
+      *
+     FSLCDTAMDCF  E                    WORKSTN
+     F                                        WFRRN KSFILE LSTSFL
+     F                                              KINFDS DSPD
+     FEXPDTAM IF  E           K        DISK
+     F            DTAM                              KRENAMEPSN1
+     FEXPDTAMBIF  E           K        DISK
+     F            DTAM                              KRENAMEPSN2
+     FEXPDTAMAIF  E           K        DISK
+     F            DTAM                              KRENAMEPSN3
+      * \STRSRC FSPEC - Modification point for F specifications
+      * \ENDSRC FSPEC
+      *_________________________________________________________________________
+      *
+     E                    WAO     1  30 38               OPTION TABLE
+     E                    WAP         6 75               OPTION DESC
+     E                    WAF     1  30 40               FUNCTION TABLE
+     E                    WAD         6 80               FUNCTION DESC
+     E                    WTM     1  10 80               PANEL MESSAGES
+      * \STRSRC ESPEC - Modification point for E specifications
+      * \ENDSRC ESPEC
+      *_________________________________________________________________________
+      *
+      * EXPDTAM  data structure
+     IWUDTAM    E DSEXPDTAM
+      *
+      * Option code data structure
+     I            DS
+     I                                        1   2 WDOPC
+     I                                        1   1 WDOPC1
+     I                                        2   2 WDOPC2
+      *
+      * CURSOR LOCATION
+     I            DS
+     I                                        1   2 WWCRSL
+     I                                    B   1   20WWCRSN
+      *
+      * Program status data structure
+     IPGMD      ESDSCASPGMD
+      *
+      * Display file data structure
+     IDSPD      E DSCASDSPD
+      *
+      * \STRSRC IDSSPEC - Modification point for I DS specifications
+      * \ENDSRC IDSSPEC
+      *___________________________________________________________________
+      *
+      * Process list panel
+     C                     EXSR DEFN                       DEFINE FIELDS
+     C                     EXSR PRPPNL                     PREPARE PANEL
+      *
+B001 C           WWENDF    DOWNE'END'                      DOWHILE NOT END
+ 001 C                     EXSR RCVMSG                     RECEIVE MSGS
+ 001 C                     EXSR DSPPNL                     DISPLAY PANEL
+ 001 C                     EXSR PRCFKY                     PROC FN KEYS
+ 001  *
+ 001 C           WWFKA     CASEQ'EXIT    'PRCEXT           EXIT
+ 001 C           WWFKA     CASEQ'REFRESH 'PRCRFR           REFRESH
+ 001 C           WWFKA     CASEQ'POSITION'PRCPSN           POSITION TO
+ 001 C           WWFKA     CASEQ'CANCEL  'PRCCNL           CANCEL
+ 001 C           WWFKA     CASEQ'ROLLUP  'PRCRUP           ROLL UP
+ 001 C           WWFKA     CASEQ'ROLLDOWN'PRCRDN           ROLLDOWN
+ 001 C           WWFKA     CASEQ'ENTER   'PRCENT           ENTER
+ 001  * \STRSRC FKEY - Modification point for functions
+ 001  * \ENDSRC FKEY
+ 001 C                     ENDCS                           END CASE
+E001 C                     ENDDO                           END DOWHILE
+      *
+     C                     WRITEREMOVE                     REMOVE WINDOW
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * Prepare list panel
+      *___________________________________________________________________
+     C           PRPPNL    BEGSR                           PREPARE PANEL
+      * DETERMINE WINDOW LOCATION
+     C                     Z-ADD10        WSWNDL           DFT WINDOW LINE
+     C                     Z-ADD30        WSWNDP           DFT WINDOW POSITION
+B001 C           WIRQS     IFNE *BLANKS                    IF CURSOR LOCATION
+ 001 C                     MOVELWIRQS     WWCRSL           EXTRACT CRS LOC
+ 001 C           WWCRSN    DIV  256       WWROW   20       CURSOR ROW
+ 001 C                     MVR            WWCOL   30       CURSOR COL
+B002 C           WWROW     IFLT 10                         IF CRS TOP SCR
+ 002 C           WWROW     ADD  2         WSWNDL           WINDOW BELOW
+E002 C                     ENDIF                           END IF CRS TOP SCR
+B002 C           WWROW     IFGT 14                         IF CRS BPT SCR
+ 002 C           WWROW     SUB  14        WSWNDL           WINDOW ABOVE
+E002 C                     ENDIF                           END IF CRS BOT SCR
+B002 C           WWCOL     IFLE 35                         IF CRS LEFT SCR
+ 002 C           WWCOL     ADD  2         WSWNDP           WINDOW RIGHT
+E002 C                     ENDIF                           END IF CRS LEFT
+B002 C           WWCOL     IFGT 45                         IF CRS RIGHT SCR
+ 002 C           WWCOL     SUB  45        WSWNDP           WINDOW LEFT
+E002 C                     ENDIF                           END IF CRS RIGHT SCR
+X001 C                     ELSE                            ELSE
+E001 C                     ENDIF                           END IF CRS LOC
+      *
+     C                     EXSR SETPSN                     SET POSITION TO IND
+     C                     MOVELDMCST     WWPSN1           LOAD POSITION TO
+     C                     CLEARWWPSN2                     CLEAR POSITION TO
+     C                     CLEARWWPSN3                     CLEAR POSITION TO
+      *
+B001 C           WIRQS     IFEQ 'SLCNXT'                   IF SELECT NEXT
+ 001 C                     EXSR SLCNXT                     SELECT NEXT
+X001 C                     ELSE                            ELSE
+ 001 C                     EXSR PSNDBF                     POSITN DB FILE
+E001 C                     ENDIF                           END IF SELECT NEXT
+     C                     ENDSR                           END PRPPNL
+      *___________________________________________________________________
+      * Set position to screen indicators
+      *___________________________________________________________________
+     C           SETPSN    BEGSR                           SET POSITION TO
+B001 C           WWPSNI    DO   WWLMT     WW               DO FOR NBR VIEWS
+ 001 C                     MOVE '0'       *IN,WW           SET OFF PSN
+E001 C                     ENDDO                           END DO
+     C           WWPSNI    ADD  WWPSNP    WW               VIEW# -> IND#
+     C           WW        SUB  1         WW               VIEW# -> IND#
+     C                     MOVE '1'       *IN,WW           DISPLAY PSN TO
+     C                     ENDSR                           END SETPSN
+      *___________________________________________________________________
+      * Display list panel
+      *___________________________________________________________________
+     C           DSPPNL    BEGSR                           DISPLAY PANEL
+      * Set OVERLAY based on last display file processed
+B001 C           WQPGMN    IFNE WUPGM                      IF NEW PROGRAM
+ 001 C                     SETOF                     35    OVERLAY OFF
+ 001 C                     MOVE WQPGMN    WUPGM            SAVE PGM NAM
+X001 C                     ELSE                            ELSE SAME PGM
+ 001 C                     SETON                     35    OVERLAY ON
+E001 C                     ENDIF                           END IF NEW PGM
+      * Write message subfile
+     C                     SETON                     30    SFLMSG DISPLAY
+     C                     WRITEMSGCTL                     DISPLAY MSG SFL
+      * Write function keys
+B001 C           *IN35     IFEQ *OFF                       IF OVERLAY OFF
+ 001 C                     WRITEFKYDSC                     DSP FNC KEY DSC
+E001 C                     ENDIF                           END IF F KEY SET
+      * Set subfile control panel overrides
+B001 C           WWPSNC    IFEQ 'Y'                        IF PSN CHANGED
+ 001 C                     SETOF                     36    DO NOT PUTOVR
+ 001 C                     MOVE 'N'       WWPSNC           NOT CHANGED
+X001 C                     ELSE                            ELSE
+ 001 C                     SETON                     36    PUTOVR
+E001 C                     ENDIF                           END IF PSN
+      * Set subfile control indicators
+B001 C           WFRRN     IFEQ 0                          IF SUBFILE EMPTY
+ 001 C                     SETOF                     30    ERASE SUBFILE
+X001 C                     ELSE                            ELSE SUBFILE
+ 001 C                     SETON                     30    DISPLAY SUBFILE
+E001 C                     ENDIF                           END IF SFL EMPTY
+      * Write subfile
+     C                     EXFMTLSTCTL                     DSP LST PANEL
+     C                     Z-ADDWDLOWR    WWLOWR           SAVE SFL RCD NBR
+     C                     Z-ADDWDLOWR    WSPAG            SET CURRENT PAGE
+     C                     SETOF                     626336RESET SCREEN CTL
+     C                     ENDSR                           END DSPPNL
+      *___________________________________________________________________
+      * Process function key pressed
+      *___________________________________________________________________
+     C           PRCFKY    BEGSR                           PROC FNC KEYS
+     C                     CALL 'PRCFKYV2'                 PROC FNC KYS
+     C                     PARM 'PROCESS 'WWRQS            REQUEST PROCESS
+     C           WWFKA     PARM           WWRTN            RETURN CODE
+     C                     PARM           WAD              FNC DESC
+     C                     PARM           WDATNB           AID BYTE
+     C                     PARM           WAF              FNC KEY TABLE
+     C                     PARM           WWFKV            FNC KYS ALLWD
+     C                     ENDSR                           END PRC FKY
+      *___________________________________________________________________
+      * Process EXIT function
+      *___________________________________________________________________
+     C           PRCEXT    BEGSR                           PROCESS EXIT
+     C                     MOVELWWFKA     WORTN            SET RETURN CODE
+     C                     MOVE 'END'     WWENDF           END FNC LOOP
+     C                     ENDSR                           END PRCEXT
+      *___________________________________________________________________
+      * Process REFRESH function
+      *___________________________________________________________________
+     C           PRCRFR    BEGSR                           PROCESS REFRESH
+     C                     EXSR PSNDBF                     POSITN DB FILE
+B001 C           WSPAG     DOWLTWWLOWR                     DO WHILE NOT PRV PAG
+ 001 C           WWSFLE    ANDNE'Y'                        AND NOT EOF
+ 001 C                     EXSR PRCRUP                     LOAD SUBFILE
+E001 C                     ENDDO                           END DO NOT PRV PAG
+     C                     ENDSR                           END PRCRFR
+      *___________________________________________________________________
+      * Process CANCEL function
+      *___________________________________________________________________
+     C           PRCCNL    BEGSR                           PROCESS CANCEL
+     C                     MOVELWWFKA     WORTN            SET RETURN CODE
+     C                     MOVE 'END'     WWENDF           END FNC LOOP
+     C                     ENDSR                           END PRCCNL
+      *___________________________________________________________________
+      * Process POSITION TO function
+      *___________________________________________________________________
+     C           PRCPSN    BEGSR                           PROCESS POSITION
+      *
+     C                     MOVE '     '   WSFLD            TRUNCATE FIELD
+B001 C           WSFLD     IFEQ 'WSPSN'                    IF CURSOR ON PSN
+ 001 C           WWPSNP    ADD  1         WWPSNP           BUMP PSN TO VIEW
+B002 C           WWPSNP    IFGT WWPSNN                     IF GT HIGH VIEW
+ 002 C                     Z-ADD1         WWPSNP           SET TO BGN VIEW
+E002 C                     ENDIF                           END IF GT HIGH PSN
+ 001 C                     EXSR SETPSN                     SET PSN TO IND
+E001 C                     ENDIF                           END IF CSR ON PSN
+     C                     SETON                     63    POSITION CURSOR
+     C                     MOVE 'Y'       WWPSNC           SET PSN CHANGED
+     C                     ENDSR                           END PRCPSN
+      *___________________________________________________________________
+      * Process ROLL UP function (add a page to list subfile)
+      *___________________________________________________________________
+     C           PRCRUP    BEGSR                           PROCESS ROLLUP
+     C                     MOVE 'N'       WWSFLE           SUBFILE END
+     C                     Z-ADDWWRRN     WSPAG            SFL PAG = LAST PAGE
+     C                     Z-ADD1         WW               WINDOW INDEX
+     C                     Z-ADDWWRRN     WFRRN            HIGH SFL RRN
+     C                     SETOF                     50    RESET EOF IND
+     C                     SETOF                     6061  SUBFILE SRC CTL
+     C                     CLEARLSTSFL                     BLANK SFL RECORD
+B001 C           WW        DOWLEWWLSTS                     DO WHILE PAG SIZ
+ 001 C           *IN50     ANDEQ'0'                        AND RECORDS
+B002 C           WWPSNP    IFEQ 1                          IF PSN VIEW 1
+ 002 C                     READ EXPDTAM                  50READ FILE
+E002 C                     ENDIF                           END IF PSN VIEW 1
+B002 C           WWPSNP    IFEQ 2                          IF PSN VIEW 2
+ 002 C                     READ EXPDTAMB                 50READ FILE
+E002 C                     ENDIF                           END IF PSN VIEW 2
+B002 C           WWPSNP    IFEQ 3                          IF PSN VIEW 3
+ 002 C                     READ EXPDTAMA                 50READ FILE
+E002 C                     ENDIF                           END IF PSN VIEW 3
+B002 C           *IN50     IFEQ '0'                        IF RECORD READ
+ 002  * \STRSRC SFLLOD - Modification point for subfile load
+ 002 C                     MOVELDMCSTN    WSCSTN           CUST NAME
+ 002 C                     MOVELDMPRN     WSPRN            PARENT COMPANY
+ 002  * \ENDSRC SFLLOD
+ 002 C                     ADD  1         WFRRN            BUMP SFL RRN
+ 002 C                     ADD  1         WW               BUMP INDEX
+ 002 C                     WRITELSTSFL                     WRITE SFL REC
+X002 C                     ELSE                            ELSE EOF
+ 002 C                     MOVE 'Y'       WWSFLE           SET EOF
+E002 C                     ENDIF                           END IF REC READ
+ 001  *
+E001 C                     ENDDO                           END DO
+      *
+B001 C           WFRRN     IFGT WWRRN                      IF RECORDS ADDED
+ 001 C           WWRRN     ADD  1         WSPAG            SFL PAG = 1ST NEW RCD
+ 001 C                     Z-ADDWFRRN     WWRRN            SAVE HIGH SFL RRN
+E001 C                     ENDIF                           END IF RCDS ADDED
+      *
+B001 C           WFRRN     IFEQ 0                          IF SFL EMPTY
+ 001 C                     MOVE WTM,7     WWMSG            EOF MSG
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+E001 C                     ENDIF                           IF SFL EMPTY
+      *
+B001 C           WWSFLE    IFEQ 'Y'                        AT END OF FILE?
+ 001 C                     MOVE WTM,2     WWMSG            EOF MSG
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+E001 C                     ENDIF                           END IF END OF FILE
+      *
+     C                     ENDSR                           END PRCRUP
+      *___________________________________________________________________
+      * Process ROLLDOWN function (beginning of SFL reached)
+      *___________________________________________________________________
+     C           PRCRDN    BEGSR                           PROCESS ROLLDOWN
+     C                     Z-ADD1         WSPAG            DSP 1ST PAGE
+     C                     MOVE WTM,1     WWMSG            BGN SFL MSG
+     C                     EXSR SNDMSG                     SEND MSG
+     C                     ENDSR                           END PRCRDN
+      *___________________________________________________________________
+      * Process ENTER function
+      *___________________________________________________________________
+     C           PRCENT    BEGSR                           PROCESS ENTER
+     C                     MOVE *BLANKS   WWENDO           OPT LOOP STATE
+     C                     MOVE *BLANKS   WWRTN            RETURN VALUE
+     C                     SETOF                     50    RESET EOF IND
+      *
+B001 C           WFRRN     IFGT 0                          IF SFL RECORDS
+ 001  *
+B002 C           WWENDO    DOWNE'END'                      DOWHILE NOT END
+ 002 C           *IN50     ANDNE*ON                        AND NOT EOF
+ 002 C                     READCLSTSFL                   50READ CHNG SBF
+ 002  *
+B003 C           *IN50     IFEQ *OFF                       IF CHANGED RECORD
+ 003 C           WSOPC     ANDNE*BLANKS                    AND OPTION CODE
+ 003 C                     EXSR PRCSLC                     PROCESS SELECTION
+ 003 C                     EXSR PRCRTN                     PROCESS OPT RETURN
+E003 C                     ENDIF                           END IF SELECTION
+E002 C                     ENDDO                           END DO WHILE NOT END
+E001 C                     ENDIF                           END IF SFL RCDS
+      *
+B001 C           *IN38     IFEQ *ON                        IF PSN CHANGED
+ 001 C           WWENDO    ANDNE'END   '                   AND NOT ERROR
+B002 C           WWPSNP    IFEQ 1                          IF PSN VIEW 1
+ 002 C                     MOVE WSPSN1    WWPSN1           SAVE PSN TO
+E002 C                     ENDIF                           IF PSN VIEW 1
+B002 C           WWPSNP    IFEQ 2                          IF PSN VIEW 2
+ 002 C                     MOVELWSPSN2    WWPSN2           SAVE PSN TO
+E002 C                     ENDIF                           IF PSN VIEW 2
+B002 C           WWPSNP    IFEQ 3                          IF PSN VIEW 3
+ 002 C                     MOVELWSPSN3    WWPSN3           SAVE PSN TO
+E002 C                     ENDIF                           IF PSN VIEW 3
+ 001 C                     EXSR PSNDBF                     POSITN DB FILE
+E001 C                     ENDIF                           IF PSN PMT
+     C                     ENDSR                           END PRCENT
+      *___________________________________________________________________
+      * Receive messages from a data queue and send to program queue
+      *___________________________________________________________________
+     C           RCVMSG    BEGSR                           RECEIVE MSG
+     C                     MOVEA*IN       WWIN             INDICATORS
+     C                     CALL 'PRCMSGV2'                 CALL MSG PGM
+     C                     PARM 'RECEIVE 'WWRQS            REQUEST MSG DSP
+     C                     PARM           WWIN             INDICATORS
+     C                     PARM           WWRTN            RETURN CODE
+     C                     MOVEAWWIN      *IN              INDICATORS RET
+     C                     ENDSR                           END RCV MSG
+      *___________________________________________________________________
+      * Clear list subfile
+      *___________________________________________________________________
+     C           CLRSFL    BEGSR                           CLEAR SUBFILE
+     C                     SETON                     31    CLEAR SUBFILE
+     C                     WRITELSTCTL                     CLEAR SUBFILE
+     C                     SETOF                     31    CLEAR SUBFILE
+     C                     Z-ADD0         WSPAG            SLF PAGE
+     C                     Z-ADD0         WFRRN            SFL RRN
+     C                     Z-ADD0         WWRRN            HIGH SFL RRN
+     C                     ENDSR                           END CLEAR SFL
+      *___________________________________________________________________
+      * Process SLCNXT Request
+      *___________________________________________________________________
+     C           SLCNXT    BEGSR                           SELECT NEXT
+     C                     MOVEL'ERROR'   WORTN            SET RETURN CODE
+     C                     MOVE *BLANKS   WWENDO           LOOP END OPTION
+B001 C           WFRRN     IFGT 0                          IF SFL RECORDS
+ 001  *
+B002 C           WWENDO    DOWNE'END'                      DOWHILE NOT END
+ 002 C                     READCLSTSFL                   50READ CHNG SBF
+ 002  *
+B003 C           *IN50     IFEQ *OFF                       IF CHANGED RECORD
+B004 C           WSOPC     IFNE *BLANKS                    IF OPTION CODE
+ 004 C                     EXSR PRCOPT                     PROCESS OPTION
+B005 C           WWOPA     IFEQ 'SELECT'                   IF SELECT
+ 005 C                     EXSR PRCSEL                     PROCESS SELECT
+E005 C                     ENDIF                           END IF SELECT
+E004 C                     ENDIF                           END IF OPTION CODE
+X003 C                     ELSE                            ELSE
+ 003 C                     MOVEL'END'     WWENDO           END OPTIONS
+E003 C                     ENDIF                           END IF CHG RCD
+E002 C                     ENDDO                           END DO WHILE NOT END
+E001 C                     ENDIF                           END IF SFL RCDS
+      *
+     C                     MOVE 'END'     WWENDF           END PGM LOOP
+     C                     ENDSR                           END SLCNXT
+      *___________________________________________________________________
+      * Process option selected
+      *___________________________________________________________________
+     C           PRCOPT    BEGSR                           PROCESS OPTION
+     C                     MOVE *BLANKS   WWRQS            CLEAR RQS FLD
+     C                     MOVE WSOPC     WDOPC            BLD OPTION CODE
+      *
+     C                     CALL 'PRCOPTV2'                 PROCESS OPTIONS
+     C                     PARM WDOPC     WWRQS            DISPLAY REQUEST
+     C           WWOPA     PARM           WWRTN            RETURN CODE
+     C                     PARM           WAP              OPTION DESC
+     C                     PARM           WAO              OPTION TAPLE
+     C                     PARM           WWOPV            OPTIONS ALLOWED
+     C                     ENDSR                           END PRCOPT
+      *___________________________________________________________________
+      * Process selection
+      *___________________________________________________________________
+     C           PRCSLC    BEGSR                           PROCESS SELECTION
+     C                     EXSR PRCOPT                     PROCESS OPTION
+     C           WWOPA     CASEQ'DISPLAY' PRCDSP           DISPLAY
+     C           WWOPA     CASEQ'SELECT'  PRCSEL           SELECT
+     C                     ENDCS                           END CASE
+     C                     ENDSR                           END PRCSLC
+      *___________________________________________________________________
+      * Process SELECT Option
+      *___________________________________________________________________
+     C           PRCSEL    BEGSR                           PROCESS SELECT
+     C                     MOVE 'END'     WWENDO           END OPT LOOP
+     C                     MOVE 'END'     WWENDF           END PGM LOOP
+     C                     MOVE *BLANKS   WORTN            SET RETURN CODE
+     C                     ENDSR                           END PRCSEL
+      *___________________________________________________________________
+      * Process DISPLAY option
+      *___________________________________________________________________
+     C           PRCDSP    BEGSR                           DISPLAY
+     C                     CALL 'DSPDTAM '             99  DISPLAY RECORD
+     C                     PARM           WWRQS            CHANGE REQUEST
+     C                     PARM           WWRTN            RETURN CODE
+     C                     PARM           WUPGM            PROGRAM NAME
+     C                     PARM           WUDTAM           RECORD DS
+     C                     PARM           WWFKV            FNC KEY ALLOWED
+B001 C           *IN99     IFEQ '1'                        IF CALL ERROR
+ 001 C                     MOVELWTM,6     WWMSG            PASS MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+ 001 C                     MOVEL'ERROR'   WORTN            RETURN ERROR
+ 001 C                     MOVEL'ERROR'   WWRTN            RETURN ERROR
+E001 C                     ENDIF                           END ERROR
+     C                     ENDSR                           END PRC DSPL
+      *___________________________________________________________________
+      * Process option Return
+      *___________________________________________________________________
+     C           PRCRTN    BEGSR                           PROCESS OPT RTN
+      *
+B001 C           WWRTN     IFEQ 'ERROR '                   IF RTN ERROR
+ 001 C                     SETON                     60    REVERSE IMAGE OPT
+ 001 C                     MOVEL'END   '  WWENDO           END PROCESSING
+X001 C                     ELSE                            ELSE
+ 001 C                     SETOF                     60    NO REVERSE IMAGE
+ 001 C                     MOVE *BLANKS   WSOPC            CLEAR OPTION
+E001 C                     ENDIF                           ENDIF ERROR
+      *
+B001 C           WWRTN     IFEQ 'CANCEL'                   IF CANCEL
+ 001 C                     MOVEL'END   '  WWENDO           END PROCESSING
+E001 C                     ENDIF                           END IF EXIT/CANCEL
+      *
+     C                     UPDATLSTSFL                     UPDATE SFL
+     C                     Z-ADDWFRRN     WSPAG            SET SFL PAGE
+     C                     ENDSR                           END PRCRTN
+      *___________________________________________________________________
+      * Position data base file pointer
+      *___________________________________________________________________
+     C           PSNDBF    BEGSR                           POSITN DB FILE
+B001 C           WWPSNP    IFEQ 1                          IF PSN VIEW 1
+ 001 C           WKPSN1    SETLLEXPDTAM                    PSN DB CURSOR
+ 001 C                     CLEARWSPSN1                     CLEAR PSN TO
+E001 C                     ENDIF                           IF PSN VIEW 1
+B001 C           WWPSNP    IFEQ 2                          IF PSN VIEW 2
+ 001 C           WKPSN2    SETLLEXPDTAMB                   PSN DB CURSOR
+ 001 C                     CLEARWSPSN2                     CLEAR PSN TO
+E001 C                     ENDIF                           IF PSN VIEW 2
+B001 C           WWPSNP    IFEQ 3                          IF PSN VIEW 3
+ 001 C           WKPSN3    SETLLEXPDTAMA                   PSN DB CURSOR
+ 001 C                     CLEARWSPSN3                     CLEAR PSN TO
+E001 C                     ENDIF                           IF PSN VIEW 3
+     C                     EXSR CLRSFL                     CLEAR SUBFILE
+     C                     EXSR PRCRUP                     LOAD SUBFILE
+     C                     MOVE 'Y'       WWPSNC           SET PSN CHANGED
+     C                     ENDSR                           END PSNDBF
+      *___________________________________________________________________
+      * Send message
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QSNDDTAQ'                 SEND MESSAGE
+     C                     PARM 'MSGDTAQ' WWDTAQ 10        DATA QUEUE NAME
+     C                     PARM 'QTEMP'   WWLIB  10        DATA QUEUE LIB
+     C                     PARM 80        WWLNGQ  50       MESSAGE LENGTH
+     C                     PARM           WWMSG  80        ERROR MESSAGE
+     C                     ENDSR                           END PROC FNC
+      *___________________________________________________________________
+      * Parameter lists
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           *ENTRY LIST
+     C                     PARM           WIRQS   8        PROGRAM REQUEST
+     C                     PARM           WORTN   8        RETURN CODE
+     C                     PARM           WUPGM  10        LAST PGM NAME
+     C                     PARM           WUDTAM           RECORD DS
+     C                     ENDSR
+      *___________________________________________________________________
+      * Define Variables
+      *___________________________________________________________________
+     C           DEFN      BEGSR                           DEFINITIONS
+     C           *LIKE     DEFN WIRQS     WWRQS            REQUEST CODE
+     C           *LIKE     DEFN WORTN     WWRTN            RETURN CODE
+     C                     MOVE *BLANKS   WWOPV  60        OPTIONS VALID
+     C                     MOVE *BLANKS   WWFKV  60        FUNCTIONS VALID
+     C                     MOVE *BLANKS   WWIN   99        INDICATOR FIELD
+     C                     MOVE *BLANKS   WWFKA   8        FUNCTION ACTION
+     C                     MOVE *BLANKS   WWENDF  3        FUNCTION CONTROL
+     C                     MOVE *BLANKS   WWOPA   8        OPTION ACTION
+     C                     MOVE *BLANKS   WWENDO  3        OPTION CONTROL
+     C                     MOVE 'N'       WWSFLE  1        SUBFILE END
+     C                     Z-ADD0         WWLOWR  40       SUB FILE LOW REL REC#
+     C                     Z-ADD0         WW      30       ARRAY  INDEX
+     C                     Z-ADD5         WWLSTS  20       LST SFL PAG SIZ
+     C                     Z-ADD0         WFRRN   40       LST SFL RRN
+     C                     Z-ADD0         WWRRN   40       LST SFL HIGH RRN
+     C                     Z-ADD1         WWPSNP  10       POSITION TO VIEW#
+     C                     MOVE 'Y'       WWPSNC  1        POSITION TO CHANGED
+     C                     Z-ADD3         WWPSNN  10       NBR PSN TO PMTS
+     C           *LIKE     DEFN WSPSN1    WWPSN1           SAVE POSITION TO
+     C           *LIKE     DEFN DMCSTN    WWPSN2           SAVE POSITION TO
+     C           *LIKE     DEFN DMPRN     WWPSN3           SAVE POSITION TO
+     C                     Z-ADD41        WWPSNI  20       PSN TO BASE IND
+     C           WWPSNI    ADD  WWPSNN    WWLMT   20       PSN TO IND LMT
+     C           WWLMT     SUB  1         WWLMT            PSN TO IND LMT
+     C                     MOVEL'*'       MSPGMQ           MSG SFL JOB MSGQ
+     C                     MOVE *BLANKS   WSOPC            OPTION CODE
+      * \STRSRC DEFN - Modification point for defines
+      * \ENDSRC DEFN
+     C                     ENDSR                           END DEFN
+      *___________________________________________________________________
+      * Key lists
+      *___________________________________________________________________
+     C           KLIST     BEGSR                           KEY LISTS
+     C           WKPSN1    KLIST                           EXPDTAM
+     C                     KFLD           WWPSN1           POSITION TO 1
+      *
+     C           WKPSN2    KLIST                           EXPDTAMB
+     C                     KFLD           WWPSN2           POSITION TO 2
+      *
+     C           WKPSN3    KLIST                           EXPDTAMA
+     C                     KFLD           WWPSN3           POSITION TO 3
+      *
+     C                     ENDSR                           END KLIST
+      *___________________________________________________________________
+      * Program error handler
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+      * \STRSRC CSRSPEC - Modification point for subroutines
+      * \ENDSRC CSRSPEC
+      *___________________________________________________________________
+**  WAO OPTION TABLE - 30X38            |OPTION 2A, ACTION 8A, DESCRIPTION 28A |
+ 1SELECT  1=Select
+ 5DISPLAY 5=Display
+**  WAF FUNCTION KEY TABLE - 30X40      |INDICATOR 2.0, ACTION 8A, DESCR 30A   |
+03EXIT    F3=Exit
+05REFRESH F5=Refresh
+10POSITIONF10=Position
+12CANCEL  F12=Cancel
+25ROLLUP
+26ROLLDOWN
+** WTM
+00You have reached the top of the list.
+00You have reached the bottom of the list.
+00Call to DSPDTAM failed.  Data was not displayed.
+00No records found.
+

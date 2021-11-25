@@ -1,0 +1,34 @@
+/*____________________________________________________________________________*/
+/*                                                                            */
+/*  Description:  RUNTMP - Run Example Application                            */
+/*                                                                            */
+/*  Command Processing Program:  WRKDTAM                                      */
+/*  (c)Copyright 1994 by Computer Applications Specialists, Inc.              */
+/*  This document contains restricted materials of CAS, Inc.                  */
+/*                                                                            */
+/*  History:                                                                  */
+/*    \STRSRC MDFLST - Modification point for history                         */
+/*    \INCSRC @SRCMBR @SRCFIL @SRCLIB MDFLST                                  */
+/*    Generated from WRKDTAM by:  CS - June, 1993                             */
+/*    \ENDSRC MDFLST                                                          */
+/*____________________________________________________________________________*/
+
+             CMD        PROMPT('Work with Example Applic. Data')
+
+             PARM       KWD(RQS) TYPE(*CHAR) LEN(8) RSTD(*YES) +
+                          DFT('LOAD') VALUES(LOAD CLEAR) EXPR(*YES) +
+                          PROMPT('Request')
+
+             PARM       KWD(RTN) TYPE(*CHAR) LEN(8) CONSTANT(' ')
+
+             PARM       KWD(DSPPGM) TYPE(*CHAR) LEN(10) CONSTANT(' ')
+
+             PARM       KWD(RCDDS) TYPE(*CHAR) LEN(1024) CONSTANT(' ')
+
+             PARM       KWD(OPTVLD) TYPE(*CHAR) LEN(60) DFT('X 01') +
+                          PROMPT('Options valid')
+
+             PARM       KWD(FNCVLD) TYPE(*CHAR) LEN(60) DFT(' ') +
+                          PROMPT('Function keys valid')
+
+

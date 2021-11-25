@@ -1,0 +1,151 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  DSPDTAMD- Display Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+     A                                      REF(EXPFRF     )
+     A                                      PRINT
+     A                                      HELP  ALTHELP
+     A                                      HLPDOC(DSPDTAM  STDHLP  STDDOC    )
+      *_________________________________________________________________________
+      * Standard function key definitions
+      *_________________________________________________________________________
+     A                                      CF02  CF03  CF04  CF05  CF06  CF07
+     A                                      CF08  CF09  CF10  CF11  CF12  CF13
+     A                                      CF14  CF15  CF16  CF17  CF18  CF19
+     A                                      CF20  CF21  CF22  CF23  CF24
+      *_________________________________________________________________________
+      * Display panel
+      *_________________________________________________________________________
+     A          R DSPPNL1
+     A                                      OVERLAY
+     A  35                                  PUTOVR OVRDTA OVRATR
+      *_________________________________________________________________________
+      * Panel title
+      *_________________________________________________________________________
+     A                                  1024'Display Example Application Data'
+     A                                      DSPATR(HI) COLOR(WHT)
+      *_________________________________________________________________________
+      * Panel body
+      *_________________________________________________________________________
+     A                                  3  1'Press Enter to continue.'
+     A                                      COLOR(BLU)
+      *
+     A                                  5  3'Customer . . . . . . . . . . . . :'
+     A            DMCST     R        O  5 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                  7  3'Customer name  . . . . . . . . . :'
+     A            DMCSTN    R        O  7 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                  8  3'Parent company . . . . . . . . . :'
+     A            DMPRN     R        O  8 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                  9  3'Nature of business . . . . . . . :'
+     A            DMDSC     R        O  9 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 10  3'Customer status  . . . . . . . . :'
+     A            DMSTT     R        O 10 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 11  3'Number of employees  . . . . . . :'
+     A            DMEMPC    R        O 11 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 12  3'Code 1 . . . . . . . . . . . . . :'
+     A            DMCD1     R        O 12 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 13  3'Code 2 . . . . . . . . . . . . . :'
+     A            DMCD2     R        O 13 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 14  3'Code 3 . . . . . . . . . . . . . :'
+     A            DMCD3     R        O 14 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 15  3'Code 4 . . . . . . . . . . . . . :'
+     A            DMCD4     R        O 15 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 16  3'Code 5 . . . . . . . . . . . . . :'
+     A            DMCD5     R        O 16 38DSPATR(HI) COLOR(WHT)
+      *
+     A                                 17  3'Sort code  . . . . . . . . . . . :'
+     A            DMSRT     R        O 17 38DSPATR(HI) COLOR(WHT)
+      *_________________________________________________________________________
+      * Function key display area
+      *_________________________________________________________________________
+     A            WSFKD1        78A  O 22  2COLOR(BLU)
+     A            WSFKD2        78A  O 23  2COLOR(BLU)
+      *_________________________________________________________________________
+      * Display panel 2
+      *_________________________________________________________________________
+     A          R DSPPNL2
+     A                                      OVERLAY
+     A  35                                  PUTOVR OVRDTA OVRATR
+      *
+     A                                  1024'Display Example Application Data'
+     A                                      DSPATR(HI) COLOR(WHT)
+     A                                  3  1'Press Enter to continue.'
+     A                                      COLOR(BLU)
+      *
+     A                                 21 74'Bottom'
+     A                                      DSPATR(HI) COLOR(WHT)
+      *
+     A            WSFKD1        78A  O 22  2COLOR(BLU)
+     A            WSFKD2        78A  O 23  2COLOR(BLU)
+      *_________________________________________________________________________
+      * Display panel 3
+      *_________________________________________________________________________
+     A          R DSPPNL3
+     A                                      OVERLAY
+     A  35                                  PUTOVR OVRDTA OVRATR
+      *
+     A                                  1024'Display Example Application Data'
+     A                                      DSPATR(HI) COLOR(WHT)
+     A                                  3  1'Press Enter to continue.'
+     A                                      COLOR(BLU)
+      *
+     A                                 21 74'Bottom'
+     A                                      DSPATR(HI) COLOR(WHT)
+      *
+     A            WSFKD1        78A  O 22  2COLOR(BLU)
+     A            WSFKD2        78A  O 23  2COLOR(BLU)
+      *_________________________________________________________________________
+      * Display panel 4
+      *_________________________________________________________________________
+     A          R DSPPNL4
+     A                                      OVERLAY
+     A  35                                  PUTOVR OVRDTA OVRATR
+      *
+     A                                  1024'Display Example Application Data'
+     A                                      DSPATR(HI) COLOR(WHT)
+     A                                  3  1'Press Enter to continue.'
+     A                                      COLOR(BLU)
+      *
+     A                                 21 74'Bottom'
+     A                                      DSPATR(HI) COLOR(WHT)
+      *
+     A            WSFKD1        78A  O 22  2COLOR(BLU)
+     A            WSFKD2        78A  O 23  2COLOR(BLU)
+      *_________________________________________________________________________
+      * Message subfile panel
+      *_________________________________________________________________________
+     A          R MSGSFL                    SFL
+     A                                      SFLMSGRCD(24)
+     A            MSGKEY                    SFLMSGKEY
+     A            MSPGMQ                    SFLPGMQ
+      *_________________________________________________________________________
+      * Message subfile control panel
+      *_________________________________________________________________________
+     A          R MSGSFLC                   SFLCTL(MSGSFL)
+     A  35                                  OVERLAY
+     A  30                                  SFLEND
+     A  30                                  SFLDSP
+     A  30                                  SFLDSPCTL
+     A  30                                  SFLINZ
+     A                                      SFLSIZ(0005)
+     A                                      SFLPAG(0001)
+     A            MSPGMQ                    SFLPGMQ
+      *
+

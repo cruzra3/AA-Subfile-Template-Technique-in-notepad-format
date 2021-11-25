@@ -1,0 +1,128 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  SLCDTAMD- Select from Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+     A                                      REF(EXPFRF   )
+     A                                      PRINT
+     A                                      HELP  ALTHELP
+     A                                      HLPDOC(WRKDTAM  STDHLP   STDDOC   )
+      *_________________________________________________________________________
+      * Standard function key definitions
+      *_________________________________________________________________________
+     A                                      CF02  CF03  CF04  CF05  CF06  CF07
+     A                                      CF08  CF09  CF10  CF11  CF12  CF13
+     A                                      CF14  CF15  CF16  CF17  CF18  CF19
+     A                                      CF20  CF21  CF22  CF23  CF24
+     A                                      ROLLUP  ROLLDOWN
+      *_________________________________________________________________________
+      * Assume panel to stop CLS on open
+      *_________________________________________________________________________
+     A          R ASSUME                    ASSUME
+     A                                  1  2' '
+      *_________________________________________________________________________
+      * Remove panel to remove window and get correct background
+      *_________________________________________________________________________
+     A          R REMOVE                    CLRL(*NO) OVERLAY FRCDTA
+      *_________________________________________________________________________
+      * List subfile panel
+      *_________________________________________________________________________
+     A          R LSTSFL                    SFL
+     A  60                                  SFLNXTCHG
+      *
+     A            WSOPC          1A  B  5  3
+     A  60                                  DSPATR(RI)
+     A  61                                  DSPATR(PC)
+      *
+     A            DMCST     R        O  5  7
+     A            WSCSTN        14   O  5 16
+     A            WSPRN         10   O  5 31
+      *_________________________________________________________________________
+      * List subfile control panel
+      *_________________________________________________________________________
+     A          R LSTCTL                    SFLCTL(LSTSFL)
+     A                                      WINDOW(MSGCTL)
+     A                                      SFLSIZ(0006)
+     A                                      SFLPAG(0005)
+     A  30                                  SFLDSP
+     A N30                                  ERASE(LSTSFL)
+     A  31                                  SFLCLR
+     A N31                                  SFLDSPCTL
+     A                                      OVERLAY
+     A  36                                  PUTOVR
+     A                                      RTNCSRLOC(&WSRCD &WSFLD)
+     A            WSRCD         10A  H
+     A            WSFLD         10A  H
+     A            WSPAG          4S 0H      SFLRCDNBR(CURSOR)
+      *
+     A                                  1003'Select Example Application Data'
+     A                                      DSPATR(HI) COLOR(WHT)
+      *
+     A  41                              2  2'Position to customer#  '
+     A  41        WSPSN1    R        I  2 26REFFLD(DMCST   )
+     A                                      CHANGE(38)
+     A  63                                  DSPATR(PC)
+      *
+     A  42                              2  2'Position to customer   '
+     A  42        WSPSN2        14   I  2 26
+     A                                      CHANGE(38)
+     A  63                                  DSPATR(PC)
+      *
+     A  43                              2  2'Position to parent comp'
+     A  43        WSPSN3        14   I  2 26
+     A                                      CHANGE(38)
+     A  63                                  DSPATR(PC)
+     A                                  3  2'Type option, press Enter.'
+     A                                      COLOR(BLU)
+     A                                  3 30'1=Select'
+      *
+     A                                  4  2'Opt'
+     A                                       DSPATR(HI) COLOR(WHT)
+     A                                  4  6'Customer#'
+     A                                       DSPATR(HI) COLOR(WHT)
+     A                                  4 16'Customer name'
+     A                                       DSPATR(HI) COLOR(WHT)
+     A                                  4 31'Parnt comp'
+     A                                       DSPATR(HI) COLOR(WHT)
+      *_________________________________________________________________________
+      * Function key description panel
+      *_________________________________________________________________________
+     A          R FKYDSC
+     A                                      WINDOW(MSGCTL)
+     A                                      OVERLAY
+     A                                 11  2'F3=Exit   F10=Position   F12=Cance-
+     A                                      l'
+     A                                      COLOR(BLU)
+      *_________________________________________________________________________
+      * Message subfile panel
+      *_________________________________________________________________________
+     A          R MSGSFL                    SFL
+     A                                      SFLMSGRCD(10)
+     A            MSGKEY                    SFLMSGKEY
+     A            MSPGMQ                    SFLPGMQ
+      *_________________________________________________________________________
+      * Message subfile control panel
+      *_________________________________________________________________________
+     A          R MSGCTL                    SFLCTL(MSGSFL)
+     A                                      WINDOW(&WSWNDL &WSWNDP 11 41)
+     A                                      WDWBORDER((*DSPATR RI))
+     A                                      WDWBORDER((*CHAR '        '))
+     A                                      USRRSTDSP
+     A  35                                  OVERLAY
+     A  30                                  SFLEND
+     A  30                                  SFLDSP
+     A  30                                  SFLDSPCTL
+     A  30                                  SFLINZ
+     A                                      SFLSIZ(0001)
+     A                                      SFLPAG(0001)
+     A            MSPGMQ                    SFLPGMQ
+     A            WSWNDL         3S 0P
+     A            WSWNDP         3S 0P
+      *
+

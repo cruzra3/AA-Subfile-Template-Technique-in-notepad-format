@@ -1,0 +1,123 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  WRKDTAMD- Work with Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+     A                                      REF(EXPFRF   )
+     A                                      PRINT
+     A                                      HELP  ALTHELP
+     A                                      HLPDOC(WRKDTAM  STDHLP   STDDOC   )
+      *_________________________________________________________________________
+      * Standard function key definitions
+      *_________________________________________________________________________
+     A                                      CF02  CF03  CF04  CF05  CF06  CF07
+     A                                      CF08  CF09  CF10  CF11  CF12  CF13
+     A                                      CF14  CF15  CF16  CF17  CF18  CF19
+     A                                      CF20  CF21  CF22  CF23  CF24
+     A                                      ROLLUP  ROLLDOWN
+      *_________________________________________________________________________
+      * List subfile panel
+      *_________________________________________________________________________
+     A          R LSTSFL                    SFL
+        60                                  SFLNXTCHG
+      *
+     A            WSOPC          2A  B 11  3
+     A  60                                  DSPATR(RI)
+     A  61                                  DSPATR(PC)
+      *
+     A            DMCST     R        O 11  7
+     A            DMCSTN    R        O 11 16
+     A            WSPRN         28A  O 11 52
+      *_________________________________________________________________________
+      * List subfile control panel
+      *_________________________________________________________________________
+     A          R LSTCTL                    SFLCTL(LSTSFL)
+     A                                      SFLSIZ(0011)
+     A                                      SFLPAG(0010)
+     A  30                                  SFLDSP
+     A N30                                  ERASE(LSTSFL)
+     A  31                                  SFLCLR
+     A N31                                  SFLDSPCTL
+     A                                      OVERLAY
+     A  36                                  PUTOVR
+     A  39                                  SFLEND(*MORE)
+     A                                      RTNCSRLOC(&WSRCD &WSFLD)
+     A            WSRCD         10A  H
+     A            WSFLD         10A  H
+     A            WSPAG          4S 0H      SFLRCDNBR(CURSOR)
+      *
+     A                                  1023'Work with Example Application Data'
+     A                                      DSPATR(HI) COLOR(WHT)
+      *
+     A  41                              3  2'Position to customer#  . . . . . .'
+     A  41        WSPSN1    R        I  3 38REFFLD(DMCST   )
+     A                                      CHANGE(38)
+     A  63                                  DSPATR(PC)
+      *
+     A  42                              3  2'Position to customer name  . . . .'
+     A  42        WSPSN2    R        I  3 38REFFLD(DMCSTN  )
+     A                                      CHANGE(38)
+     A  63                                  DSPATR(PC)
+      *
+     A  43                              3  2'Position to parent company . . . .'
+     A  43        WSPSN3    R        I  3 38REFFLD(DMPRN   )
+     A                                      CHANGE(38)
+     A  63                                  DSPATR(PC)
+      *_________________________________________________________________________
+      * Standard option definitions
+      *_________________________________________________________________________
+     A                                  5  2'Type option, press Enter.'
+     A                                      COLOR(BLU)
+      *
+     A            WSOPD1        75A  O  6  4COLOR(BLU)
+     A  37                                  OVRDTA
+     A            WSOPD2        75A  O  7  4COLOR(BLU)
+     A  37                                  OVRDTA
+      *
+     A                                  9  2'Opt'
+     A                                       DSPATR(HI) COLOR(WHT)
+     A                                  9  6'Customer#'
+     A                                       DSPATR(HI) COLOR(WHT)
+     A                                  9 16'Customer name'
+     A                                       DSPATR(HI) COLOR(WHT)
+     A                                  9 52'Parent company'
+     A                                       DSPATR(HI) COLOR(WHT)
+      *
+     A            WSOPC          2A  B 10  3
+     A  62                                  DSPATR(RI)
+     A            DMCST     R        B 10  7
+     A  62                                  DSPATR(RI)
+      *_________________________________________________________________________
+      * Function key description panel
+      *_________________________________________________________________________
+     A          R FKYDSC
+     A                                      OVERLAY
+     A            WSFKD1        78A  O 22  2COLOR(BLU)
+     A            WSFKD2        78A  O 23  2COLOR(BLU)
+      *_________________________________________________________________________
+      * Message subfile panel
+      *_________________________________________________________________________
+     A          R MSGSFL                    SFL
+     A                                      SFLMSGRCD(24)
+     A            MSGKEY                    SFLMSGKEY
+     A            MSPGMQ                    SFLPGMQ
+      *_________________________________________________________________________
+      * Message subfile control panel
+      *_________________________________________________________________________
+     A          R MSGCTL                    SFLCTL(MSGSFL)
+     A  35                                  OVERLAY
+     A  30                                  SFLEND
+     A  30                                  SFLDSP
+     A  30                                  SFLDSPCTL
+     A  30                                  SFLINZ
+     A                                      SFLSIZ(0004)
+     A                                      SFLPAG(0001)
+     A            MSPGMQ                    SFLPGMQ
+      *
+

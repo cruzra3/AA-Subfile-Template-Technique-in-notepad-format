@@ -1,0 +1,279 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  DSPDTAM - Display Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+      *  Parameters:
+      *    RQS   - Request (DISPLAY)
+      *    RTN   - Return code (EXIT, CANCEL, ERROR, blank)
+      *    PGM   - Last program to output to screen
+      *    RCD   - Record data structure
+      *    FKY   - Function keys valid (blank=all)
+      *_________________________________________________________________________
+      *
+     FDSPDTAMDCF  E                    WORKSTN
+     F                                              KINFDS DSPD
+      * \STRSRC FSPEC - Modification point for F specifications
+      * \ENDSRC FSPEC
+      *_________________________________________________________________________
+     E                    WAF     1  30 40               FUNCTION TABLE
+     E                    WAD         6 80               FUNCTION DESC
+     E                    WTM     1   3 80               PANEL MESSAGES
+      * \STRSRC ESPEC - Modification point for E specifications
+      * \ENDSRC ESPEC
+      *_________________________________________________________________________
+      *
+      * EXPDTAM  data structure
+     IWDDTAM    E DSEXPDTAM
+      *
+      * Program status data structure
+     IPGMD      ESDSCASPGMD
+      *
+      * Display file data structure
+     IDSPD      E DSCASDSPD
+      *
+      * \STRSRC IDSSPEC - Modification point for I DS specifications
+      * \ENDSRC IDSSPEC
+      *_________________________________________________________________________
+      * Process display panel
+     C                     EXSR PRPPNL                     PREPARE PANEL
+B001 C           WWSTT     DOWNE'END'                      DOWHILE NOT END
+ 001 C                     EXSR RCVMSG                     RECEIVE MSGS
+ 001 C                     EXSR DSPPNL                     DISPLAY PANEL
+ 001 C                     EXSR PRCFKY                     PROC FNCTN KEYS
+ 001 C           WWFNC     CASEQ'KEYS'    PRCDKY           DISPLAY KEYS
+ 001 C           WWFNC     CASEQ'EXIT'    PRCRTN           EXIT
+ 001 C           WWFNC     CASEQ'CANCEL'  PRCCNL           CANCEL
+ 001 C           WWFNC     CASEQ'ROLLUP'  PRCRUP           ROLL UP
+ 001 C           WWFNC     CASEQ'ROLLDOWN'PRCRDN           ROLL DOWN
+ 001 C           WWFNC     CASEQ'ENTER '  PRCENT           ENTER
+ 001  * \STRSRC FKEY - Modification point for functions
+ 001  * \ENDSRC FKEY
+ 001 C                     ENDCS                           END CASE
+E001 C                     ENDDO                           END DOWHILE
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * Prepare display panel
+      *___________________________________________________________________
+     C           PRPPNL    BEGSR                           PREPARE PANEL
+     C                     MOVE *BLANKS   WORTN            RETURN CODE
+     C                     MOVE *BLANKS   WWSTT            RESET END
+     C                     Z-ADD1         WWPNL            CURRENT PNL
+     C                     Z-ADD1         WWFKS            FNC KEY SET
+     C                     EXSR BLDFKY                     BUILD FNCTNS
+     C                     EXSR GETREC                     GET RECORD
+B001 C           WWRTN     IFNE *BLANKS                    IF GET IN ERR
+ 001 C                     MOVE WTM,1     WWMSG            GET MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+ 001 C                     MOVE 'ERROR   'WORTN            RETURN ERROR
+ 001 C                     MOVE 'END'     WWSTT            END PROGRAM
+E001 C                     ENDIF                           END IF ERROR
+     C                     ENDSR                           END PRPPNL
+      *___________________________________________________________________
+      * Get record
+      *___________________________________________________________________
+     C           GETREC    BEGSR                           GET RECORD
+     C                     CALL 'UPDDTAM '                 PROCESS REC IO
+     C                     PARM 'GETNL '  WWRQS   8        GET RECORD
+     C                     PARM           WWRTN            RETURN CODE
+     C                     PARM           WDDTAM           REC DATA
+     C                     ENDSR                           END GETREC
+      *___________________________________________________________________
+      * Receive messages
+      *___________________________________________________________________
+     C           RCVMSG    BEGSR                           RECEIVE MSG
+     C                     MOVEA*IN       WWIN             INDICATORS
+     C                     CALL 'PRCMSGV2'                 CALL MSG PGM
+     C                     PARM 'RECEIVE 'WWRQS            RECEIVE MESSAGES
+     C                     PARM           WWIN             INDICATORS
+     C                     PARM           WWRTN   8        RETURN CODE
+     C                     MOVEAWWIN      *IN              INDICATORS RET
+     C                     ENDSR                           END RCV MSG
+      *___________________________________________________________________
+      * Display the display panel
+      *___________________________________________________________________
+     C           DSPPNL    BEGSR                           DISPLAY PANEL
+      * Set OVERLAY based on last display file processed
+B001 C           WQPGMN    IFNE WUPGM                      IF NEW PROGRAM
+ 001 C                     SETOF                     35    OVERLAY OFF
+ 001 C                     MOVE WQPGMN    WUPGM            SAVE CRNT PGM
+X001 C                     ELSE                            SAME PGM
+ 001 C                     SETON                     35    OVERLAY ON
+E001 C                     ENDIF                           END IF NEW PGM
+      * Write message subfile
+     C                     SETON                     30    SFLMSG DISPLAY
+     C                     WRITEMSGSFLC                    WRITE MSG SFL
+      * Write display panels
+B001 C                     SELEC
+ 001 C           WWPNL     WHEQ 1                          IF PANEL 1
+ 001 C                     EXFMTDSPPNL1                    DSPLY PNL1
+ 001 C           WWPNL     WHEQ 2                          IF PANEL 2
+ 001 C                     EXFMTDSPPNL2                    DSPLY PNL2
+ 001 C           WWPNL     WHEQ 3                          IF PANEL 3
+ 001 C                     EXFMTDSPPNL3                    DSPLY PNL3
+ 001 C           WWPNL     WHEQ 4                          IF PANEL 4
+ 001 C                     EXFMTDSPPNL4                    DSPLY PNL4
+E001 C                     ENDSL                           END SELECT
+     C                     ENDSR                           END DSP DSP
+      *___________________________________________________________________
+      * Build function key information
+      *___________________________________________________________________
+     C           BLDFKY    BEGSR                           BLD FNC KEYS
+     C                     CALL 'PRCFKYV2'                 PROC FNC KYS
+     C                     PARM 'BUILD   'WWRQS            BUILD REQUEST
+     C           WWFNC     PARM           WWRTN            RETURN CODE
+     C                     PARM           WAD              FNC DESC
+     C                     PARM           WDATNB           AID BYTE
+     C                     PARM           WAF              FNC KEY TABLE
+     C                     PARM           WIFKY            FNC KYS ALLWD
+      *
+     C           WWFKS     ADD  WWFKS     WW               KEY DSC IDX
+     C                     MOVELWAD,WW    WSFKD2           LOAD LINE 2
+     C                     SUB  1         WW               BUMP IDX
+     C                     MOVELWAD,WW    WSFKD1           LOAD LINE 1
+     C                     ENDSR                           END BLD FKY
+      *___________________________________________________________________
+      * Process function keys
+      *___________________________________________________________________
+     C           PRCFKY    BEGSR                           PROC FNC KEYS
+     C                     CALL 'PRCFKYV2'                 PROC FNC KEY
+     C                     PARM 'PROCESS 'WWRQS            PROCESS REQUEST
+     C           WWFNC     PARM           WWRTN            RETURN CODE
+     C                     PARM           WAD              FNC DESC
+     C                     PARM           WDATNB           AID BYTE
+     C                     PARM           WAF              FNC KEY TABLE
+     C                     PARM           WIFKY            FNC KYS ALLWD
+     C                     ENDSR                           END PRCFKY
+      *___________________________________________________________________
+      * Process KEYS function
+      *___________________________________________________________________
+     C           PRCDKY    BEGSR                           PROCESS KEYS
+     C                     Z-ADD1         WW               KEY DSC IDX
+B001 C           WWFKS     DOUEQ1                          DO UNTIL SET=1
+ 001 C           WAD,WW    ORNE *BLANKS                    OR KEYS FOUND
+ 001 C           WWFKS     ADD  1         WWFKS            NEXT KEY SET
+B002 C           WWFKS     IFGT 3                          IF OVER 3
+ 002 C                     Z-ADD1         WWFKS            SET TO 1
+E002 C                     ENDIF                           END IF OVER 3
+ 001 C           WWFKS     MULT 2         WW               KEY DESCR IDX
+ 001 C                     SUB  1         WW               KEY DESCR IDX
+E001 C                     ENDDO                           END DO KEYS
+     C           WWFKS     ADD  WWFKS     WW               KEY DSC IDX
+     C                     MOVELWAD,WW    WSFKD2           LOAD LINE 2
+     C                     SUB  1         WW               BUMP IDX
+     C                     MOVELWAD,WW    WSFKD1           LOAD LINE 1
+     C                     ENDSR                           END PRCDKY
+      *___________________________________________________________________
+      * Process RETURN function
+      *___________________________________________________________________
+     C           PRCRTN    BEGSR                           PROCESS RETURN
+     C                     MOVELWWFNC     WORTN            RETURN CODE
+     C                     MOVE 'END'     WWSTT            END INVOCATION
+     C                     ENDSR                           END RETURN
+      *___________________________________________________________________
+      * Process CANCEL function
+      *___________________________________________________________________
+     C           PRCCNL    BEGSR                           PROCESS CANCEL
+     C                     MOVELWWFNC     WORTN            RETURN CODE
+     C                     MOVE 'END'     WWSTT            END INVOCATION
+     C                     ENDSR                           END PRCCNL
+      *___________________________________________________________________
+      * Process ROLLUP function
+      *___________________________________________________________________
+     C           PRCRUP    BEGSR                           PROCESS ROLLUP
+     C           WWPNL     ADD  1         WWPNL            NEXT PANEL
+B001 C           WWPNL     IFGT WWPNLN                     IF GT LAST PNL
+ 001 C           WWPNL     SUB  1         WWPNL            LAST PANEL
+E001 C                     ENDIF                           END IF GT LST PNL
+     C                     ENDSR                           END PRCRUP
+      *___________________________________________________________________
+      * Process ROLLDOWN function
+      *___________________________________________________________________
+     C           PRCRDN    BEGSR                           PROCESS ROLLDOWN
+     C           WWPNL     SUB  1         WWPNL            PRV PANEL
+B001 C           WWPNL     IFLT 1                          IF LT FIRST PNL
+ 001 C           WWPNL     ADD  1         WWPNL            LAST PANEL
+E001 C                     ENDIF                           END IF LT FST PNL
+     C                     ENDSR                           END PRCRDN
+      *___________________________________________________________________
+      * Process ENTER function
+      *___________________________________________________________________
+     C           PRCENT    BEGSR                           PROCESS ENTER
+     C                     MOVE *BLANKS   WORTN            RETURN CODE
+     C                     MOVE 'END'     WWSTT            END INVOCATION
+     C                     ENDSR                           END PRCENT
+      *___________________________________________________________________
+      * Send message
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QSNDDTAQ'                 SEND MESSAGE
+     C                     PARM 'MSGDTAQ' WWDTAQ 10        DATA QUEUE NAME
+     C                     PARM 'QTEMP'   WWLIB  10        DATA QUEUE LIB
+     C                     PARM 80        WWLNGQ  50       MESSAGE LENGTH
+     C                     PARM           WWMSG  80        ERROR MESSAGE
+     C                     ENDSR                           END SND MSG
+      *___________________________________________________________________
+      * Parameter lists
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           *ENTRY LIST
+     C           WWTSK     PARM           WIRQS   8        EXT MODE
+     C                     PARM           WORTN   8        INTERNAL MODE
+     C                     PARM           WUPGM  10        LAST PGM NAME
+     C                     PARM           WDDTAM           RECORD DS
+     C                     PARM           WIFKY  60        FUNCTIONS VALID
+     C                     ENDSR                           END PLIST
+      *___________________________________________________________________
+      * Initialize routine
+      *___________________________________________________________________
+     C           *INZSR    BEGSR                           INITIALIZE
+     C           *LIKE     DEFN WIRQS     WWTSK            TASK REQUESTED
+     C           *LIKE     DEFN WORTN     WWFNC            FUNCTION CODE
+     C           *LIKE     DEFN WIFKY     WWFKY            FUNCTIONS VALID
+     C           *LIKE     DEFN WIFKY     WWFKV            FUNCTION KEY VALID
+     C           *LIKE     DEFN WIFKY     WWOPV            OPTIONS VALID
+     C                     MOVE *BLANKS   WWIN   99        INDICATOR FIELD
+     C                     MOVE *BLANKS   WWOCD   8        OPTION CODE
+     C                     MOVE *BLANKS   WWSTT   3        STATUS
+     C                     MOVE *BLANKS   WORTN            RETURN CODE
+     C                     Z-ADD1         WWPNL   10       CURRENT PNL
+     C                     Z-ADD1         WWPNLN  10       NBR OF PNLS
+     C                     Z-ADD1         WWFKS   10       FNC KEY SET
+     C                     Z-ADD*ZEROS    WW      30       WORK INDEX
+     C                     MOVEL'*'       MSPGMQ           SRT JOB'S MSGQ
+     C                     MOVEL'EXPDTAM 'WWFIL  10        FILE NAME-NOTES
+     C                     MOVE *BLANKS   WWFLK 128        FILE KEY - NOTES
+     C                     MOVE *BLANKS   WWTXT  60        TEXT - NOTES
+      * \STRSRC DEFN - Modification point for defines
+      * \ENDSRC DEFN
+     C                     ENDSR                           END DEFN
+      *___________________________________________________________________
+      * Program error handler
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+      * \STRSRC CSRSPEC - Modification point for subroutines
+      * \ENDSRC CSRSPEC
+      *___________________________________________________________________
+**  WAF FUNCTION KEY TABLE - 30X40      |INDICATOR 2.0, ACTION8A, DESCR 30A    |
+03EXIT    F3=Exit
+12CANCEL  F12=Cancel
+25ROLLUP
+26ROLLDOWN
+** WTM
+00Example Application Data not found.
+00Call to notes failed.
+00There are no notes for this record.
+

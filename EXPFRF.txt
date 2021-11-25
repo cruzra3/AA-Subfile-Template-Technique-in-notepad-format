@@ -1,0 +1,55 @@
+      **************************************************************************
+      *  Description:  EXPFRF - Example application field reference file
+      *
+      *  Written for CAS by:  cs - November, 1989
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      **************************************************************************
+     A          R FRF                       TEXT('Example Field +
+     A                                      Reference File')
+      *
+      * System root fields:
+     A            ADR           35          COLHDG('Address')
+     A            CD            10A         TEXT('Code')
+     A            CMPN          60          COLHDG('Company Name')
+     A            CST            7  0       TEXT('Customer Code')
+     A                                      COLHDG('Customer')
+     A            CSTN          35A         TEXT('Customer Name')
+     A                                      COLHDG('Customer Name')
+     A            DSC           35A         TEXT('Nature of Business')
+     A                                      COLHDG('Nature of Business')
+     A            EMPC           5  0       TEXT('Number of Employees')
+     A                                      COLHDG('Employees')
+     A            PRN           35A         TEXT('Parent Company')
+     A                                      COLHDG('Parent Co')
+     A            SRT           10A         TEXT('Sort Code')
+     A                                      COLHDG('Sort' 'Code')
+     A            STT            3A         TEXT('Customer Status')
+     A                                      COLHDG('Cust' 'Sts')
+      *
+      * Data master file
+      *
+     A*         R DTAM                      TEXT('Example Data Master File')
+     A            DMCST     R               REFFLD(CST)
+     A            DMPRC     R               REFFLD(CST)
+     A                                      TEXT('Parent Company Code')
+     A                                      COLHDG('Parent' 'Co #')
+     A            DMCSTN    R               REFFLD(CSTN)
+     A            DMPRN     R               REFFLD(PRN)
+     A            DMDSC     R               REFFLD(DSC)
+     A            DMSTT     R               REFFLD(STT)
+     A            DMEMPC    R               REFFLD(EMPC)
+     A            DMCD1     R               REFFLD(CD)
+     A                                      COLHDG('Code 1')
+     A            DMCD2     R               REFFLD(CD)
+     A                                      COLHDG('Code 2')
+     A            DMCD3     R               REFFLD(CD)
+     A                                      COLHDG('Code 3')
+     A            DMCD4     R               REFFLD(CD)
+     A                                      COLHDG('Code 4')
+     A            DMCD5     R               REFFLD(CD)
+     A                                      COLHDG('Code 5')
+     A            DMSRT     R               REFFLD(SRT)
+      *
+

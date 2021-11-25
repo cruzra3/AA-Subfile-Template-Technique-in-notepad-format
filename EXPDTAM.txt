@@ -1,0 +1,28 @@
+      **************************************************************************
+      *  Description:  EXPDTAM - Example Application Data
+      *
+      *  Written for CAS by:  cs - November, 1989
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      **************************************************************************
+      *
+     A                                      REF(EXPFRF)
+     A                                      UNIQUE
+     A          R DTAM                      TEXT('Example Data')
+     A            DMCST     R
+     A            DMCSTN    R
+     A            DMPRN     R
+     A            DMDSC     R
+     A            DMSTT     R
+     A            DMEMPC    R
+     A            DMCD1     R
+     A            DMCD2     R
+     A            DMCD3     R
+     A            DMCD4     R
+     A            DMCD5     R
+     A            DMSRT     R
+      *
+     A          K DMCST
+      *
+

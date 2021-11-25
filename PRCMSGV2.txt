@@ -1,0 +1,284 @@
+      *___________________________________________________________________
+      *
+      *  Description:  PRCMSGV2 - Process Messages
+      *
+      *  Parameters:
+      *    RQS   - Request (DISPLAY, CLEAR)
+      *    IND   - Indicator array
+      *    RTN   - Return code (number of messages processed)
+      *
+      *  Written for CAS by:  cs - June, 1992
+      *                       BG  12/16/92
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *___________________________________________________________________
+      *
+     E                    WAI        99  1               INDICATORS
+     E                    WADQ    1   2 80               CRTDTAQ
+      *___________________________________________________________________
+      *
+      * MESSAGE TEXT
+     I            DS
+     I                                        1  80 WDMSG
+     I                                        1   2 WDMSGN
+     I                                        1   20WM
+     I                                        3  80 WDMSGT
+      * MESSAGE API INTERFACE VARIABLES
+     I            DS
+     I                                    B   1   40WDSNDL
+     I                                    B   5   80WDSNDC
+     I            DS
+     I                                    B   1   40WDRMVC
+     IWDBIN      IDS
+     I                                    B   1   40WDBNA4
+     I                                    B   5   80WDBNB4
+      *
+      * RTVOBJD API INTERFACE VARIABLES
+     IWDRCVV      DS
+     I                                    B   1   40WQBYTR
+     I                                    B   5   80WQBYTA
+     I                                        9  18 WQNAM
+     I                                       19  28 WQLIB
+     I                                       29  38 WQTYP
+     I                                       39  48 WQLIBR
+     I                                    B  49  520WQAUXP
+     I                                       53  62 WQOWN
+     I                                       63  64 WQDOM
+     I                                       65  77 WQCRT
+     I                                       66  67 WQCRTY
+     I                                       68  69 WQCRTM
+     I                                       70  71 WQCRTD
+     I                                       78  90 WQCHG
+     I                                       91 100 WQEXTA
+     I                                      101 150 WQOBJT
+     I                                      151 160 WQSRCN
+     I                                      161 170 WQSRCL
+     I                                      171 180 WQSRCM
+     I                                      181 193 WQSRCU
+     I                                      194 206 WQSAVD
+     I                                      207 219 WQRSTD
+     I                                      220 229 WQCRTU
+     I                                      230 237 WQCRTS
+     I                                      238 244 WQDATR
+     I                                    B 245 2480WQSAVS
+     I                                    B 249 2520WQSAVN
+     I                                      253 262 WQSTGS
+     I                                      263 272 WQSAVC
+     I                                      273 343 WQSAVV
+     I                                      344 353 WQSAVO
+     I                                      354 363 WQSVFN
+     I                                      364 373 WQSVFL
+     I                                      374 390 WQSAVL
+     I                                      391 399 WQSYSL
+     I                                      400 415 WQCMPD
+     I                                      416 423 WQOBJL
+     I                                      424 424 WQUSRC
+     I                                      425 440 WQLICD
+     I                                      441 450 WQPTF
+     I                                      451 460 WQAPR
+      *
+      * RELEASE COMPATIBILITY TEST CONSTANTS
+     I              'V02R01M00'           C         WC210
+     I              'V02R01M01'           C         WC211
+      *___________________________________________________________________
+      *
+      * PROCESS EACH REQUEST
+     C           WIRQS     CASEQ'RECEIVE' RCVMSG           CLEAR/RECEIVE MSG
+     C           WIRQS     CASEQ'DISPLAY' DSPMSG           DISPLAY MESSAGES
+     C           WIRQS     CASEQ'CLEAR'   RMVMSG           CLEAR MESSAGES
+     C                     CAS            PRCERR           PROCESS ERROR
+     C                     ENDCS                           END CASE
+      *
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * RECEIVE MESSAGES
+      *   REMOVE MESSAGES FROM THE PROGRAM MESSAGE QUEUE
+      *   READ MESSAGES FROM DATA QUEUE AND SEND TO CALLING PROGRAM MSGQ
+      *___________________________________________________________________
+     C           RCVMSG    BEGSR                           RECEIVE MESSAGES
+     C                     EXSR RMVMSG                     CLEAR MESSAGES
+     C                     EXSR DSPMSG                     SEND MESSAGES
+     C                     ENDSR                           END RCVMSG
+      *___________________________________________________________________
+      * DISPLAY MESSAGES
+      *   READ MESSAGES FROM DATA QUEUE AND SEND TO CALLING PROGRAM MSGQ
+      *___________________________________________________________________
+     C           DSPMSG    BEGSR                           DISPLAY MESSAGES
+     C                     Z-ADD*ZEROS    WWCNT            COUNT MESSAGES
+     C                     EXSR GETMSG                     GET MESSAGE
+B001 C           WWDTAS    DOWGT0                          DO WHILE MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+ 001 C                     TESTN          WDMSGN     99    TEST MESSAGE #
+B002 C           *IN99     IFEQ '1'                        IF MSG #
+ 002 C           WM        ANDGT0                          AND > 0
+ 002 C                     MOVE '1'       WAI,WM           SET INDICATOR
+E002 C                     ENDIF                           END IF MSG #
+ 001 C                     ADD  1         WWCNT            COUNT MESSAGES
+ 001 C                     ADD  1         WWCNTT           COUNT MESSAGES
+ 001 C                     EXSR GETMSG                     GET MESSAGE
+E001 C                     ENDDO                           END WHILE MSG
+      *
+     C                     MOVE WWCNT     WORTN            RETURN COUNT
+B001 C           WWCNTT    IFGT 2000                       IF 2000 MESSAGES
+ 001 C                     EXSR DLTDTA                     DELETE DTAQ
+ 001 C                     EXSR CRTDTA                     CREATE DTAQ
+ 001 C                     Z-ADD0         WWCNTT           RESET COUNT
+E001 C                     ENDIF                           END IF 2000 MSG
+     C                     ENDSR                           END DSPMSG
+      *___________________________________________________________________
+      * REMOVE MESSAGES FROM THE PROGRAM MESSAGE QUEUE
+      *___________________________________________________________________
+     C           RMVMSG    BEGSR                           REMOVE MESSAGES
+     C                     CALL 'QMHRMVPM'             99  REMOVE MESSAGE API
+     C                     PARM           WWRMVP           MESSAGE PGM Q
+     C                     PARM           WDRMVC           PGM STACK CTR
+     C                     PARM           WWRMVK           MESSAGE KEY
+     C                     PARM           WWRMVR           MSG TO REMOVE
+     C                     PARM           WWRMVE           MSG ERROR STRUCTR
+     C                     ENDSR                           END RMVMSG
+      *___________________________________________________________________
+      * PROCESS ERROR
+      *___________________________________________________________________
+     C           PRCERR    BEGSR                           PROCESS ERROR
+     C                     MOVEL'ERROR'   WORTN            RETURN ERROR
+     C                     ENDSR                           END PRCERR
+      *___________________________________________________________________
+      * RECEIVE MESSAGE FROM THE DATA QUEUE
+      *___________________________________________________________________
+     C           GETMSG    BEGSR                           GET MESSAGE
+     C                     CALL 'QRCVDTAQ'             99  RECEIVE MSG API
+     C                     PARM           WWDTAQ           DATA QUEUE
+     C                     PARM           WWDTAL           DTAQ LIBRARY
+     C                     PARM           WWDTAS           MESSAGE LNG
+     C           WDMSG     PARM           WWDTAT           MESSAGE TEXT
+     C                     PARM           WWDTAW           WAIT
+     C                     ENDSR                           END GETMSG
+      *___________________________________________________________________
+      * SEND MESSAGE
+      *   USE MSG API TO SEND MESSAGE TO CALLING PROGRAMS MSGQ
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QMHSNDPM'             99  SEND PGM MESSAGE API
+     C                     PARM           WWSNDI           MSG ID
+     C                     PARM           WWSNDF           MSG FILE
+     C                     PARM WDMSGT    WWSNDT           MESSAGE TEXT
+     C                     PARM           WDSNDL           MESSAGE LENGTH
+     C                     PARM           WWSNDY           MESSAGE TYPE
+     C                     PARM           WWSNDP           MESSAGE PGM Q
+     C                     PARM           WDSNDC           PGM STACK COUNTER
+     C                     PARM           WWSNDK           MESSAGE KEY
+     C                     PARM           WWSNDE           MSG ERROR STRUCTR
+     C                     ENDSR                           END SNDMSG
+      *___________________________________________________________________
+      * CREATE THE MESSAGE DATA QUEUE
+      *___________________________________________________________________
+     C           CRTDTA    BEGSR                           CREATE DATA QUEUE
+     C                     CALL 'QCMDEXC'              99  EXECUTE COMMAND
+     C                     PARM           WADQ,1           CREATE DATA Q
+     C                     PARM           WWLNGQ           COMMAND LENGTH
+B001 C           *IN99     IFEQ *ON                        IF COMMAND ERROR
+ 001 C                     Z-ADD0         WDRMVC           PGM STK CNT
+ 001 C                     EXSR RMVMSG                     REMOVE MESSAGES
+ 001 C                     Z-ADD1         WDRMVC           PGM STK CNT
+E001 C                     ENDIF                           END IF CMD ERR
+     C                     ENDSR                           END CRTDTA
+      *___________________________________________________________________
+      * DELETE THE MESSAGE DATA QUEUE
+      *___________________________________________________________________
+     C           DLTDTA    BEGSR                           DELETE DATA QUEUE
+     C                     CALL 'QCMDEXC'              99  EXECUTE COMMAND
+     C                     PARM           WADQ,2           DELETE DATA Q
+     C                     PARM           WWLNGQ           COMMAND LENGTH
+     C                     ENDSR                           END DLTDTA
+      *___________________________________________________________________
+      * INITIALIZE ROUTINE
+      *___________________________________________________________________
+     C           *INZSR    BEGSR                           INITIALIZE
+     C                     MOVE *BLANKS   WORTN            RETURN CODE
+     C                     Z-ADD*ZEROS    WWCNT   80       MESSAGE COUNT
+     C                     Z-ADD*ZEROS    WWCNTT  80       MESSAGE COUNT
+     C                     Z-ADD80        WWLNGQ 155       COMMAND LENGTH
+      *
+      * USE API TO RETRIEVE RELEASE LEVEL FOR THE MESSAGE HANDLER API'S
+      *   THIS IS DONE IN ORDER FOR THIS PROGRAM TO BE SUPPORTED ON A
+      *   V2R2M0 MACHINE AS WELL AS ON A V2R1M0 THROUGH V2R1M1 MACHINE.
+      *   THE PARMS FOR THE MESSAGE HANDLER API'S ARE DIFFERENT IN THE
+      *   TWO RELEASES.  WE ONLY RETRIEVE THE DESCRIPTION OF ONE
+      *   PROGRAM TO DETERMINE THE SYSTEM RELEASE LEVEL (FIELD WQSYSL).
+      *   IF THE RELEASE LEVEL IS V2R1M1 OR V2R1M0 THEN THE
+      *   'ERROR DATA STRUCTURE' CAN CONTAIN ALL BLANKS, ELSE THE FIRST
+      *   8 BYTES MUST CONTAIN BINARY ZEROS.
+     C                     MOVEL'QMHRMVPM'WWW10  10        PGM NAME
+     C           WWW10     CAT  'QSYS'    WWQAL1 20 P      QUALIFIED NAME
+     C                     CALL 'QUSROBJD'             50  RTV OBJ DESC
+     C                     PARM           WDRCVV           RCV VARIABLE
+     C                     PARM 460       WDBNA4           RCV LENGTH
+     C                     PARM 'OBJD0300'WWFMTN 10        FORMAT NAME
+     C                     PARM           WWQAL1           OBJ/LIB
+     C                     PARM '*PGM'    WWOBJT 10        OBJECT TYPE
+      *
+      * SEND MESSAGE PARAMETERS
+     C                     Z-ADD*ZEROS    WDBNA4           RESET TO ZEROS
+     C                     MOVE *BLANKS   WWSNDI  7        MSG ID
+     C                     MOVE *BLANKS   WWSNDF 20        MSG FILE NAME
+     C                     MOVE *BLANKS   WWSNDT 80        MESSAGE TEXT
+     C                     Z-ADD80        WDSNDL           MESSAGE LENGTH
+     C                     MOVEL'*INFO'   WWSNDY 10        MESSAGE TYPE
+     C                     MOVEL'*'       WWSNDP 10        MESSAGE PGM Q
+     C                     Z-ADD1         WDSNDC           PGM STACK COUNTER
+     C                     MOVE *BLANKS   WWSNDK  4        MESSAGE KEY
+     C                     MOVE *BLANKS   WWSNDE 32        MSG ERROR STRUCTR
+      *
+      * ADJUST FOR RELEASE COMPATIBILITY
+B001 C           WQSYSL    IFNE WC210                      V02R01M00 RLS
+ 001 C           WQSYSL    ANDNEWC211                      V02R01M01 RLS
+ 001 C                     MOVELWDBIN     WWSNDE           1ST 8 TO BIN 0
+E001 C                     ENDIF
+      *
+      * REMOVE MESSAGE PARAMETERS
+     C                     MOVEL'*'       WWRMVP 10        MESSAGE PGM Q
+     C                     Z-ADD1         WDRMVC           PGM STACK CTR
+     C                     MOVE *BLANKS   WWRMVK  4        MESSAGE KEY
+     C                     MOVEL'*ALL'    WWRMVR 10        MSG TO REMOVE
+     C                     MOVE *BLANKS   WWRMVE 32        MSG ERROR STRUCTR
+      *
+      * ADJUST FOR RELEASE COMPATIBILITY
+B001 C           WQSYSL    IFNE WC210                      V02R01M00 RLS
+ 001 C           WQSYSL    ANDNEWC211                      V02R01M01 RLS
+ 001 C                     MOVELWDBIN     WWRMVE           1ST 8 TO BIN 0
+E001 C                     ENDIF
+      *
+      * DATA QUEUE PARAMETERS
+     C                     MOVEL'MSGDTAQ' WWDTAQ 10        DATA QUEUE
+     C                     MOVEL'QTEMP'   WWDTAL 10        DTAQ LIBRARY
+     C                     Z-ADD80        WWDTAS  50       DTAQ MSG SIZE
+     C                     MOVE *BLANKS   WWDTAT 80        DTAQ MSG TEXT
+     C                     Z-ADD*ZEROS    WWDTAW  50       DTAQ WAIT
+      *
+     C                     EXSR CRTDTA                     CREATE DTAQ
+     C                     ENDSR                           END *INZSR
+      *___________________________________________________________________
+      * PARAMETER LISTS USED BY THIS PROGRAM
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           PRCMSG LIST
+     C                     PARM           WIRQS   8        Request code
+     C                     PARM           WAI              Indicators
+     C                     PARM           WORTN   8        Return code
+     C                     ENDSR                           END PLIST
+      *___________________________________________________________________
+      * PROGRAM ERROR HANDLER
+      *___________________________________________________________________
+      *          *PSSR     BEGSR                           PROGRAM ERROR
+      *                    CALL 'SNDRPGM'              99  SEND RPG MSG
+      *                    PARM           WQPGMN           PROGRAM NAME
+      *                    PARM           WQSTSC           STATUS CODE
+      *                    PARM           WQRPGS           RPG STATEMENT
+      *                    PARM           WQMSG            MESSAGE ID
+      *                    ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+** WADTAQ
+CRTDTAQ DTAQ(QTEMP/MSGDTAQ) MAXLEN(80) SEQ(*FIFO)
+DLTDTAQ DTAQ(QTEMP/MSGDTAQ)
+

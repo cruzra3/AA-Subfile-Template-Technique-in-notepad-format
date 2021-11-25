@@ -1,0 +1,240 @@
+      *___________________________________________________________________
+      *
+      *  Description:  PRCFKYV2 - Process function keys - AID version
+      *
+      *  Parameters:
+      *    RQS   - Request (BUILD, PROCESS)
+      *    RTN   - Return code (blank, ERROR)
+      *    FKD   - Return function descriptions (6x80)
+      *    AID   - Attention Indicator byte (1A - fnc key pressed)
+      *    FKT   - Function key table (29x40)
+      *    FKV   - Function keys valid (30x2)
+      *
+      *  Written for CAS by:  cs - December, 1989
+      *                       cs - August, 1990
+      *                       cs - June, 1992
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *___________________________________________________________________
+      *
+     E                    WIFKV      30  2               FUNCTION KEY VALID
+     E                    WAT        30 40               FUNCTION KEY TABLE
+     E                    WAN        30  2               FNC KEY IND TBL
+     E                    WAE        30 16               FNC KEY DSC OUT
+     E                    WAI        30  2               FNC KEY IND OUT
+     E                    WAA        30 10               FNC KEY ACT OUT
+     E                    WAD         6 80               FUNCTION KEY DESCR
+     E                    WTM     1   1 80               PANEL MESSAGES
+      *___________________________________________________________________
+      *
+      * PROGRAM STATUS DATA STRUCTURE
+     IPGMD      ESDSCASPGMD
+      *
+      * FUNCTION KEY TABLE - INPUT PARAMETER
+     IWIFKT       DS
+     I                                        11200 WAT
+      *
+      * AID KEY - INPUT PARAMETER
+     I            DS
+     I                                        1   2 WDAIDA
+     I                                    B   1   20WDAIDN
+      * FUNCTION KEY DESCRIPTIONS - OUTPUT PARAMETER
+     IWOFKD       DS
+     I                                        1 480 WAD
+     I                                        1 480 WAE
+      *___________________________________________________________________
+      *
+      * DEFAULT OUTPUT PARAMETERS
+     C                     MOVE *BLANKS   WORTN            RETURN CODE
+     C                     MOVE *BLANKS   WOFKD            RESET DESC
+      *
+      * BUILD
+B001 C           WIRQS     IFEQ 'BUILD'                    IF BUILD
+ 001 C                     EXSR BLDFKY                     BLD FNCTN KEYS
+E001 C                     ENDIF                           END IF DISPLAY
+      *
+      * PROCESS
+B001 C           WIRQS     IFEQ 'PROCESS'                  IF PROCESS
+ 001 C                     EXSR BLDFKY                     BLD FNCTN KEYS
+ 001 C                     EXSR PRCFKY                     PROC FNCTN KEYS
+E001 C                     ENDIF                           END IF PROCESS
+      *
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * BUILD SCREEN FUNCTION KEYS
+      *___________________________________________________________________
+     C           BLDFKY    BEGSR                           BLD FNCTN KEYS
+     C                     MOVE *BLANKS   WAA              INIT ACTIONS
+     C                     MOVE *BLANKS   WAE              INIT FNC DSC OUT
+     C                     MOVE *BLANKS   WAI              INIT FNC IND OUT
+     C                     Z-ADD0         WX               INIT INDEX
+     C                     MOVELWAT       WAN              EXTRACT FNC NBR
+      *
+B001 C                     DO   30        WW               DO WHILE FNCTNS
+B002 C           WIFKV,1   IFEQ 'I '                       IF INCLUDE
+ 002 C           WAN,WW    LOKUPWIFKV                    99LOOK IN REQUEST
+B003 C           *IN99     IFEQ '0'                        IF NOT INCLUDED
+ 003 C                     MOVE *BLANKS   WAN,WW           BLANK FNC NBR
+E003 C                     ENDIF                           END IF NOT INCL
+E002 C                     ENDIF                           END IF INCLUDE
+ 001  *
+B002 C           WIFKV,1   IFEQ 'X '                       IF EXCLUDE
+ 002 C           WAN,WW    LOKUPWIFKV                    99LOOK IN REQUEST
+B003 C           *IN99     IFEQ '1'                        IF NOT EXCLUDED
+ 003 C                     MOVE *BLANKS   WAN,WW           BLANK FNC NBR
+E003 C                     ENDIF                           END IF NOT EXCL
+E002 C                     ENDIF                           END IF EXCLUDE
+ 001  *
+B002 C           WAN,WW    IFNE '  '                       IF FUNCTION NBR
+ 002 C                     ADD  1         WX               BUMP INDEX
+ 002 C                     MOVE WAT,WW    WWDSC2           EXTRACT DESC 2
+B003 C           WWDSC2    IFNE *BLANKS                    IF LONG DESCR
+B004 C           WX        IFEQ 05                         IF END OF LINE
+ 004 C           WX        OREQ 10                         IF END OF LINE
+ 004 C           WX        OREQ 15                         IF END OF LINE
+ 004 C           WX        OREQ 20                         IF END OF LINE
+ 004 C           WX        OREQ 25                         IF END OF LINE
+ 004 C                     ADD  1         WX               BUMP TO NEXT LINE
+E004 C                     ENDIF                           END IF END OF LINE
+E003 C                     ENDIF                           END IF LONG DESCR
+ 002  *
+B003 C           WX        IFEQ 11                         IF BEGIN OF SET 2
+ 003 C           WX        OREQ 21                         OR BEGIN OF SET 3
+ 003 C                     Z-ADD1         WY               INIT INDEX
+ 003 C           '02'      LOKUPWAN,WY                   99IF KEYS
+B004 C           *IN99     IFEQ *ON                        IF KEYS
+ 004 C                     MOVE WAT,WY    WWDSC            EXTRACT DESC
+ 004 C                     MOVELWWDSC     WAE,WX           EXTRACT DESC
+ 004 C                     MOVELWAT,WY    WAA,WX           EXTRACT ACTION
+ 004 C                     MOVELWAT,WY    WAI,WX           EXTRACT INDICATOR
+ 004 C                     ADD  1         WX               BUMP TO NEXT LINE
+E004 C                     ENDIF                           END IF KEYS
+E003 C                     ENDIF                           END IF BEGIN OF SET
+ 002  *
+B003 C           WX        IFLE 30                         IF LINES NOT FULL
+ 003 C                     MOVE WAT,WW    WWDSC            EXTRACT DESC
+ 003 C                     MOVELWWDSC     WAE,WX           EXTRACT DESC
+ 003 C                     MOVELWAT,WW    WAA,WX           EXTRACT ACTION
+ 003 C                     MOVELWAT,WW    WAI,WX           EXTRACT INDICATOR
+E003 C                     ENDIF                           END LINES NOT FULL
+B003 C           WWDSC2    IFNE *BLANKS                    IF LONG DESCR
+ 003 C           WX        ANDLT30                         IF LINES NOT FULL
+ 003 C                     ADD  1         WX               BUMP TO NEXT POS
+ 003 C                     MOVE WAT,WW    WWDSC3           EXTRACT DESC 2
+ 003 C                     MOVELWWDSC3    WAE,WX           EXTRACT DESC 2
+E003 C                     ENDIF                           END IF LONG DESCR
+E002 C                     ENDIF                           END IF FUNCTION NBR
+E001 C                     ENDDO                           END DO FNCTNS
+      *
+     C                     ENDSR                           END BUILD FNCTN
+      *___________________________________________________________________
+      * PROCESS FUNCTION KEYS
+      *___________________________________________________________________
+     C           PRCFKY    BEGSR                           PROC FNCTN KEYS
+     C                     EXSR PRCAID                     PROCESS AID BYTE
+      *
+B001 C           WWAID     IFGT 1                          IF FNC KEY
+ 001 C                     MOVE WWAID     WWF              CONVERT TO ALPH
+ 001 C                     Z-ADD1         WWN              STRT LOKUP AT 1
+ 001 C           WWF       LOKUPWAI,WWN                  99LOOK FOR FNCTN#
+B002 C           *IN99     IFEQ '1'                        IF FNC KEY FND
+ 002 C                     MOVE WAA,WWN   WORTN            EXTRACT ACTION
+X002 C                     ELSE                            ELSE
+ 002 C                     EXSR SNDMSG                     SEND MESSAGE
+ 002 C                     MOVEL'ERROR   'WORTN            SND INV FKY MSG
+E002 C                     ENDIF                           END IF FKY KEY FND
+E001 C                     ENDIF                           END IF FKY KEY
+      *
+B001 C           WWAID     IFEQ 0                          IF ENTER
+ 001 C                     MOVEL'ENTER   'WORTN            THEN ENTER
+E001 C                     ENDIF                           END IF ENTER
+      *
+     C                     ENDSR                           END PROC FNC
+      *___________________________________________________________________
+      * PROCESS AID BYTE
+      *___________________________________________________________________
+     C           PRCAID    BEGSR                           PROCESS AID BYTE
+     C                     MOVE WIAID     WDAIDA           CONVERT TO NUMERIC
+     C                     Z-ADDWDAIDN    WWAIDN           CONVERT TO NUMERIC
+     C                     Z-SUB1         WWAID            SET FNC KEY NOT FND
+B001 C                     SELEC                           SELECT
+ 001 C           WWAIDN    WHLE 60                         IF CF01 - CF12
+ 001 C           WWAIDN    SUB  48        WWAID            FUNCTION KEY
+ 001 C           WWAIDN    WHLE 188                        IF CF13 - CF24
+ 001 C           WWAIDN    SUB  164       WWAID            FUNCTION KEY
+ 001 C           WWAIDN    WHEQ 241                        IF ENTER
+ 001 C                     Z-ADD*ZERO     WWAID            FUNCTION KEY
+ 001 C           WWAIDN    WHEQ 244                        IF ROLL DOWN
+ 001 C                     Z-ADD26        WWAID            FUNCTION KEY
+ 001 C           WWAIDN    WHEQ 245                        IF ROLL UP
+ 001 C                     Z-ADD25        WWAID            FUNCTION KEY
+E001 C                     ENDSL                           END SELECT
+     C                     ENDSR                           END PRCAID
+      *___________________________________________________________________
+      * SEND MESSAGE
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QSNDDTAQ'                 SEND MESSAGE
+     C                     PARM           WWDTAQ           DATA QUEUE NAME
+     C                     PARM           WWLIB            DATA QUEUE LIB
+     C                     PARM           WWLNGQ           MESSAGE LENGTH
+     C                     PARM           WTM              ERROR MESSAGE
+     C                     ENDSR                           END PROC FNC
+      *___________________________________________________________________
+      * INITIAL SUBROUTINE
+      *___________________________________________________________________
+     C           *INZSR    BEGSR                           INITIAL SUBROUTINE
+     C                     MOVEL'MSGDTAQ' WWDTAQ           DATA QUEUE NAME
+     C                     MOVEL'QTEMP'   WWLIB            DATA QUEUE LIB
+     C                     Z-ADD80        WWLNGQ           MESSAGE LENGTH
+     C                     BITOF'01234567'WWBINZ           BINARY ZERO
+     C                     MOVELWWBINZ    WDAIDA           BINARY ZERO
+     C                     ENDSR                           END *INZSR
+      *___________________________________________________________________
+      * DEFN SUBROUTINE
+      *___________________________________________________________________
+     C           DEFN      BEGSR                           INITIAL SUBROUTINE
+     C                     MOVE *BLANKS   WWDTAQ 10        DATA QUEUE NAME
+     C                     MOVE *BLANKS   WWLIB  10        DATA QUEUE LIB
+     C                     Z-ADD0         WWLNGQ  50       MESSAGE LENGTH
+     C                     Z-ADD0         WX      20       INIT INDEX
+     C                     Z-ADD0         WW      50       INDEX WORK
+     C                     MOVE *BLANKS   WWDSC2 16        EXTRACT DESC 2
+     C                     Z-ADD0         WY      30       INIT INDEX
+     C                     MOVE *BLANKS   WWDSC  30        EXTRACT DESC
+     C                     MOVE *BLANKS   WWDSC3 14        EXTRACT DESC 2
+     C                     MOVE WWAID     WWF     2        CONVERT TO ALPH
+     C                     Z-ADD0         WWN    150       LOKUP WORK
+     C                     MOVE *BLANKS   WWF     2        ALPHA WORK
+     C                     MOVE *BLANKS   WWBINZ  1        BINARY ZERO
+     C                     Z-ADD0         WWN    150       LOKUP WORK
+     C                     Z-ADD0         WWAIDN  30       NUMERIC AID BYTE
+     C                     Z-ADD0         WWAID   20       FUNCTION KEY#
+     C                     ENDSR                           END *INZSR
+      *___________________________________________________________________
+      * PARAMETER LISTS USED BY THIS PROGRAM
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           PRCFKY LIST
+     C                     PARM           WIRQS   8        REQUEST
+     C                     PARM           WORTN   8        RETURN CODE
+     C                     PARM           WOFKD            FUNCTION DESC
+     C                     PARM           WIAID   1        AID BYTE
+     C                     PARM           WIFKT            FUNCTION KEY TABLE
+     C                     PARM           WIFKV            FUNCTION KEY VALID
+     C                     ENDSR
+      *___________________________________________________________________
+      * PROGRAM ERROR HANDLER
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+** WTM
+00Function key not valid.
+

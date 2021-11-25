@@ -1,0 +1,32 @@
+/*____________________________________________________________________________*/
+/*                                                                            */
+/*  Description:  RUNTMPC - Run Example Application                           */
+/*                                                                            */
+/*  (c)Copyright 1994 by Computer Applications Specialists, Inc.              */
+/*  This document contains restricted materials of CAS, Inc.                  */
+/*                                                                            */
+/*  History:                                                                  */
+/*    \STRSRC MDFLST - Modification point for history                         */
+/*    \ENDSRC MDFLST                                                          */
+/*____________________________________________________________________________*/
+
+             PGM        PARM(&RQS &RTN &PGM &RCD &OPT &FKY)
+
+             DCL  &RQS *CHAR LEN(8)
+             DCL  &RTN *CHAR LEN(8)
+             DCL  &PGM *CHAR LEN(10)
+             DCL  &RCD *CHAR LEN(1024)
+             DCL  &OPT *CHAR LEN(60)
+             DCL  &FKY *CHAR LEN(60)
+
+             CHKOBJ     OBJ(QTEMP/MSGDTAQ) OBJTYPE(*DTAQ)
+             MONMSG     MSGID(CPF0000) EXEC(DO)
+             CRTDTAQ    DTAQ(QTEMP/MSGDTAQ) MAXLEN(80) TEXT('Message +
+                          data queue')
+             ENDDO      /* End data queue not found */
+
+             CALL WRKDTAM   PARM(&RQS &RTN &PGM &RCD &OPT &FKY)
+             RCLRSC
+
+             ENDPGM
+

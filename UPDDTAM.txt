@@ -1,0 +1,257 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  UPDDTAM - Update Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+      *  Parameters:
+      *    WIRQS - request (GET, GETNL, RELEASE, ADD, ADDKEY, CHANGE, GNRKEY,
+      *                   INZRCD, INZNKY, DELETE, OVRLAY)
+      *    WORTN - return code
+      *    WUDTA - file data as a data structure
+      *___________________________________________________________________
+      *
+     FEXPDTAM UF  E           K        DISK                      A    UC
+      * \STRSRC FSPEC - Modification point for F specifications
+      * \ENDSRC FSPEC
+      *___________________________________________________________________
+      *
+     E                    WTOVR   1   1 80               OVERRIDE TABLE
+     E                    WTM     1   2 80               PANEL MESSAGES
+      * \STRSRC ESPEC - Modification point for E specifications
+      * \ENDSRC ESPEC
+      *___________________________________________________________________
+      *
+      * EXPDTAM  data structure
+     IWUDTA     E DSEXPDTAM
+      *
+      * Program status data structure
+     IPGMD      ESDSCASPGMD
+      *
+      * \STRSRC IDSSPEC - Modification point for I DS specifications
+      * \ENDSRC IDSSPEC
+      *___________________________________________________________________
+      * Open file
+B001 C           WWOPN     IFNE 'Y'                        IF NOT OPEN
+ 001 C           WIRQS     ANDNE'INZRCD'                   AND REQ NOT INZRCD
+ 001 C                     EXSR OPNFIL                     OPEN FILE
+ 001 C                     MOVE 'N'       WWUPD   1        NO RCD FOR UPDATE
+E001 C                     ENDIF                           END IF NOT OPEN
+      *
+      * Process I/O request
+     C                     MOVE *BLANKS   WORTN            INZ RETURN
+     C           WIRQS     CASEQ'GET'     GET              GET RECORD
+     C           WIRQS     CASEQ'GETNL'   GETNL            GET NO LOCK
+     C           WIRQS     CASEQ'CHANGE'  CHANGE           UPDATE
+     C           WIRQS     CASEQ'ADD'     ADD              ADD
+     C           WIRQS     CASEQ'ADDKEY'  ADDKEY           ADD W/GENKEY
+     C           WIRQS     CASEQ'GNRKEY'  GNRKEY           GENERATE KEY
+     C           WIRQS     CASEQ'DELETE'  DELETE           DELETE RECORD
+     C           WIRQS     CASEQ'INZRCD'  INZRCD           INIT RECORD
+     C           WIRQS     CASEQ'INZNKY'  INZNKY           INIT EXCEPT KEY
+     C           WIRQS     CASEQ'RELEASE' REL              RELEASE
+     C           WIRQS     CASEQ'OVRLAY'  OVRLAY           OVERLAY DATA
+     C           WIRQS     CASNE'END'     PRCERR           PROCESS ERROR
+     C                     ENDCS                           END CASE
+      *
+      * Return to caller
+B001 C           WIRQS     IFEQ 'END'                      IF END REQUEST
+ 001 C                     SETON                     LR    END PROGRAM
+X001 C                     ELSE                            ELSE
+ 001 C                     RETRN                           RETURN
+E001 C                     ENDIF                           END IF END
+      *___________________________________________________________________
+      * Open file - Override EXPDTAM for all usage, no sharing, forced write
+      *___________________________________________________________________
+     C           OPNFIL    BEGSR                           OVERRIDE FILE
+     C                     Z-ADD80        WWLNG  155       COMMAND LNG
+     C                     CALL 'QCMDEXC'              99  OVERRIDE FILE
+     C                     PARM           WTOVR            OVERRIDE COMMAND
+     C                     PARM           WWLNG            COMMAND LENGTH
+B001 C           *IN99     IFEQ '0'                        IF OVERRIDE
+ 001 C                     OPEN EXPDTAM                99  OPEN FILE
+E001 C                     ENDIF                           END IF OVERRIDE
+B001 C           *IN99     IFEQ '0'                        IF OPEN
+ 001 C                     MOVE 'Y'       WWOPN   1        FILE OPEN
+X001 C                     ELSE                            ELSE
+ 001 C                     MOVEL'OPNERR'  WORTN            OPEN ERROR
+ 001 C                     MOVE WTM,1     WWMSG            PASS ERR MSG
+ 001 C                     EXSR SNDMSG                     SEND MSG
+ 001 C                     RETRN                           RETURN ERROR
+E001 C                     ENDIF                           END IF OPEN
+     C                     ENDSR                           END OPNFIL
+      *___________________________________________________________________
+      * Get record
+      *___________________________________________________________________
+     C           GET       BEGSR                           GET RECORD
+     C           WKDTAM    CHAINEXPDTAM              9998  GET RECORD
+B001 C           *IN99     IFEQ '1'                        IF NO RCD FND
+ 001 C                     MOVEL'GETERR'  WORTN            RETURN ERR
+E001 C                     ENDIF                           END IF RCD
+B001 C           *IN98     IFEQ '1'                        IF RCD NOT AVAIL
+ 001 C                     MOVEL'NOTAVL'  WORTN            RETURN ERR
+E001 C                     ENDIF                           END IF RCD
+     C                     ENDSR                           END GET
+      *___________________________________________________________________
+      * Get record without a lock
+      *___________________________________________________________________
+     C           GETNL     BEGSR                           GET NO LOCK
+     C           WKDTAM    CHAINEXPDTAM             N9999  GET RECORD NO LOCK
+B001 C           *IN99     IFEQ '1'                        IF NO RCD FND
+ 001 C                     MOVEL'GETERR'  WORTN            ERROR
+E001 C                     ENDIF                           END IF RCD
+     C                     ENDSR                           END GET NO LOCK
+      *___________________________________________________________________
+      * Release record
+      *___________________________________________________________________
+     C           REL       BEGSR                           RELEASE
+     C                     UNLCKEXPDTAM                99  RELEASE
+B001 C           *IN99     IFEQ '1'                        IF NO RCD FND
+ 001 C                     MOVEL'UNLERR'  WORTN            ERROR
+E001 C                     ENDIF                           END IF RCD
+     C                     ENDSR                           END RELEASE
+      *___________________________________________________________________
+      * Add record
+      *___________________________________________________________________
+     C           ADD       BEGSR                           ADD RECORD
+     C                     WRITEDTAM                   99  ADD RECORD
+B001 C           *IN99     IFEQ '1'                        IF BAD ADD
+ 001 C                     MOVEL'WRTERR'  WORTN            RETURN ERROR
+X001 C                     ELSE                            ELSE
+ 001 C                     MOVE *BLANKS   WORTN            GOOD RETURN
+E001 C                     ENDIF                           END BAD ADD
+     C                     ENDSR                           END ADD
+      *___________________________________________________________________
+      * Generate key and add record
+      *___________________________________________________________________
+     C           ADDKEY    BEGSR                           ADD RECORD
+B001 C           WORTN     DOUEQ*BLANKS                    DO UNTIL ADDED
+ 001 C                     EXSR GNRKEY                     GENERATE KEY
+ 001 C                     EXSR ADD                        ADD RECORD
+E001 C                     ENDDO                           END DO UNTIL ADDED
+     C                     ENDSR                           END ADDKEY
+      *___________________________________________________________________
+      * Generate key
+      *___________________________________________________________________
+     C           GNRKEY    BEGSR                           GENERATE KEY
+     C                     MOVELWUDTA     WWDTA            SAVE DATA
+     C           *HIVAL    SETGTEXPDTAM                99  POSITION TO EOF
+     C                     READPEXPDTAM             N    98GET LAST RECORD
+B001 C           *IN98     IFEQ '1'                        IF NO RCD FND
+ 001 C                     Z-ADD1         WWKEY            INITIALIZE KEY
+X001 C                     ELSE                            ELSE
+ 001 C           DMCST     ADD  1         WWKEY            GENERATE NEW KEY
+E001 C                     ENDIF                           END IF NO RCD FND
+     C                     MOVELWWDTA     WUDTA            RESTORE DATA
+     C                     MOVE WWKEY     DMCST            RESTORE KEY
+     C                     ENDSR                           END GENERATE KEY
+      *___________________________________________________________________
+      * Change record
+      *___________________________________________________________________
+     C           CHANGE    BEGSR                           CHANGE RECORD
+     C                     UPDATDTAM                   99  CHANGE RECORD
+B001 C           *IN99     IFEQ '1'                        IF ERROR
+ 001 C                     MOVEL'UPDERR'  WORTN            RETURN ERROR
+E001 C                     ENDIF                           END IF ERROR
+     C                     ENDSR                           END CHANGE
+      *___________________________________________________________________
+      * Delete record
+      *___________________________________________________________________
+     C           DELETE    BEGSR                           DELETE RECORD
+     C           WKDTAM    DELETDTAM                 9999  DELETE RECORD
+B001 C           *IN99     IFEQ '1'                        IF ERROR
+ 001 C                     MOVEL'DLTERR'  WORTN            RETURN ERROR
+E001 C                     ENDIF                           END IF NOT ERROR
+     C                     ENDSR                           END DELETE
+      *___________________________________________________________________
+      * Overlay record
+      *___________________________________________________________________
+     C           OVRLAY    BEGSR                           DELETE RECORD
+     C                     MOVELWUDTA     WWDTA            SAVE DATA
+     C                     EXSR GET                        GET NEW RECORD
+B001 C           WORTN     IFEQ *BLANKS                    IF NOT ERROR
+ 001 C                     MOVELWWDTA     WUDTA            RETURN DATA
+ 001 C                     EXSR CHANGE                     CHANGE THE DATA
+E001 C                     ENDIF                           END IF NOT ERROR
+     C                     ENDSR                           END OVRLAY
+      *___________________________________________________________________
+      * Initialize record
+      *___________________________________________________________________
+     C           INZRCD    BEGSR                           INIT RECORD
+     C                     CLEARDTAM                       CLEAR RECORD
+     C                     ENDSR                           END INZRCD
+      *___________________________________________________________________
+      * Initialize record except key
+      *___________________________________________________________________
+     C           INZNKY    BEGSR                           INIT EXCEPT KEY
+     C           *NOKEY    CLEARDTAM                       CLEAR RECORD
+     C                     ENDSR                           END INZNKY
+      *___________________________________________________________________
+      * Process error
+      *___________________________________________________________________
+     C           PRCERR    BEGSR                           ERROR
+     C                     MOVEL'REQERR'  WORTN            REQUEST ERROR
+     C                     MOVE WTM,2     WWMSG            PASS MSG
+     C                     EXSR SNDMSG                     SEND MSG
+     C                     ENDSR                           END ERROR
+      *___________________________________________________________________
+      * SEND MESSAGE
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QSNDDTAQ'                 SEND MESSAGE
+     C                     PARM 'MSGDTAQ' WWDTAQ 10        DATA QUEUE NAME
+     C                     PARM 'QTEMP'   WWLIB  10        DATA QUEUE LIB
+     C                     PARM 80        WWLNGQ  50       MESSAGE LENGTH
+     C                     PARM           WWMSG  80        ERROR MESSAGE
+     C                     ENDSR                           END PROC FNC
+      *___________________________________________________________________
+      * Entry parameter list
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           *ENTRY LIST
+     C                     PARM           WIRQS   8        REQUEST
+     C                     PARM           WORTN   8        RETURN CODE
+     C                     PARM           WUDTA            DATA
+     C                     ENDSR
+      *___________________________________________________________________
+      * Key lists
+      *___________________________________________________________________
+     C           KLIST     BEGSR                           KEY LISTS
+     C           WKDTAM    KLIST                           EXPDTAM
+     C                     KFLD           DMCST
+      *
+     C                     ENDSR
+      *___________________________________________________________________
+      * Initialize routine
+      *___________________________________________________________________
+     C           *INZSR    BEGSR                           INITIALIZE
+     C           *LIKE     DEFN WUDTA     WWDTA            DATA
+     C           *LIKE     DEFN DMCST     WWKEY            KEY
+      * \STRSRC DEFN - Modification point for defines
+      * \ENDSRC DEFN
+     C                     ENDSR                           END INITIALIZE
+      *___________________________________________________________________
+      * Program error handler
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+      * \STRSRC CSRSPEC - Modification point for subroutines
+      * \ENDSRC CSRSPEC
+      *___________________________________________________________________
+** WTOVR
+OVRDBF     FILE(EXPDTAM   ) FRCRATIO(1) WAITFILE(*IMMED) WAITRCD(2) SHARE(*NO)
+** WTM
+00EXPDTAM  file can not be opened.  UPDDTAM failed.
+00Request not supported by program UPDDTAM
+

@@ -1,0 +1,295 @@
+      *_________________________________________________________________________
+      *
+      *  Description:  DLTDTAM - Delete Example Application Data
+      *
+      *  (c)Copyright 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *  History:
+      *    Written for CAS by:  CS - February 25, 1994
+      *_________________________________________________________________________
+      *
+      *  Parameters:
+      *    RQS   - Request (DELETE, DLTGRP)
+      *    RTN   - Return code (ERROR, CANCEL)
+      *    PGM   - Last program to output to screen
+      *    KEY   - Record key
+      *    FKY   - Function keys valid (blank=all)
+      *_________________________________________________________________________
+      *
+     FDLTDTAMDCF  E                    WORKSTN
+     F                                              KINFDS DSPD
+      * \STRSRC FSPEC - Modification point for F specifications
+      * \ENDSRC FSPEC
+      *_________________________________________________________________________
+      *
+     E                    WAF     1  30 40               FUNCTION TABLE
+     E                    WAD         6 80               FUNCTION DESC
+     E                    WTM     1   7 80               PANEL MESSAGES
+      * \STRSRC ESPEC - Modification point for E specifications
+      * \ENDSRC ESPEC
+      *_________________________________________________________________________
+      *
+      * EXPDTAM  data structure
+     IWDDTAM    E DSEXPDTAM
+      *
+      * Program status data structure
+     IPGMD      ESDSCASPGMD
+      *
+      * Display file data structure
+     IDSPD      E DSCASDSPD
+      *
+      *
+      *
+      * \STRSRC IDSSPEC - Modification point for I DS specifications
+      * \ENDSRC IDSSPEC
+      *___________________________________________________________________
+      * Process delete request
+     C                     MOVE *BLANKS   WORTN            SET RETURN CODE
+     C           WIRQS     CASEQ'DELETE'  PRCCNF           DELETE CONFIRM
+     C                     CAS            PRCERR           PROCESS ERROR
+     C                     ENDCS                           END CASE
+     C                     RETRN                           RETURN
+      *___________________________________________________________________
+      * Process ERROR function
+      *___________________________________________________________________
+     C           PRCERR    BEGSR                           PROC ADD RQST
+     C                     MOVE WTM,6     WWMSG            PASS MSG
+     C                     EXSR SNDMSG                     SEND MSG
+     C                     MOVE 'ERROR   'WORTN            RETURN ERROR
+     C                     ENDSR                           END PRCERR
+      *___________________________________________________________________
+      * Delete record with confirmation
+      *___________________________________________________________________
+     C           PRCCNF    BEGSR                           DELETE CONFIRMATION
+     C                     EXSR PRPPNL                     PREPARE PANEL
+B001 C           WWSTT     DOWNE'END'                      DOWHILE NOT END
+ 001 C                     EXSR RCVMSG                     RECEIVE MESSAGES
+ 001 C                     EXSR DSPPNL                     DISPLAY PANEL
+ 001 C                     EXSR PRCFKY                     PROC FNCTN KEYS
+ 001 C           WWFNC     CASEQ'EXIT    'PRCEXT           EXIT
+ 001 C           WWFNC     CASEQ'CANCEL  'PRCCNL           CANCEL
+ 001 C           WWFNC     CASEQ'ENTER   'PRCENT           ENTER
+ 001 C                     ENDCS                           END CASE
+E001 C                     ENDDO                           END DOWHILE
+     C                     ENDSR                           END PRCCNF
+      *___________________________________________________________________
+      * Prepare panel
+      *___________________________________________________________________
+     C           PRPPNL    BEGSR                           PREPARE PANEL
+     C                     MOVE *BLANKS   WWSTT            LOOP CONTROL
+     C                     EXSR BLDFKY                     BUILD FNCTNS
+     C                     EXSR GETREC                     GET RECORD
+B001 C           WWRTN     IFNE *BLANKS                    IF GET ERROR
+ 001 C                     MOVE WTM,2     WWMSG            GET MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+ 001 C                     MOVE 'ERROR   'WORTN            RETURN ERROR
+ 001 C                     MOVE 'END'     WWSTT            END PROGRAM
+E001 C                     ENDIF                           END IF ERROR
+     C                     ENDSR                           END PRPPNL
+      *___________________________________________________________________
+      * Get record for delete
+      *___________________________________________________________________
+     C           GETREC    BEGSR                           GET REC FOR DLT
+     C                     CALL 'UPDDTAM '                 PROCESS REC IO
+     C                     PARM 'GET     'WWRQS   8        GET RECORD
+     C                     PARM           WWRTN            RETURN CODE
+     C                     PARM           WDDTAM           REC DATA
+B001 C           WWRTN     IFNE *BLANKS                    IF GET ERROR
+ 001 C                     MOVELWTM,3     WWMSG            PASS MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+ 001 C                     MOVEL'ERROR'   WORTN            RETURN ERROR
+ 001 C                     MOVEL'END'     WWSTT            RETURN END
+E001 C                     ENDIF                           END ERROR
+     C                     ENDSR                           END PREP CHANGE
+      *___________________________________________________________________
+      * Display delete confirmation panel
+      *___________________________________________________________________
+     C           DSPPNL    BEGSR                           DISPLAY PANEL
+      * Set OVERLAY based on last display file processed
+B001 C           WQPGMN    IFNE WUPGM                      IF NEW PROGRAM
+ 001 C                     SETOF                     35    OVERLAY OFF
+ 001 C                     MOVE WQPGMN    WUPGM            SAVE CRNT PGM
+X001 C                     ELSE                            SAME PGM
+ 001 C                     SETON                     35    OVERLAY ON
+E001 C                     ENDIF                           END IF NEW PGM
+      * Write message subfile
+     C                     SETON                     30    MSGSFL DISPLAY
+     C                     WRITEMSGSFLC                    DISPLAY MSG SFL
+      * Write delete confirmation panel
+     C                     EXFMTDLTPNLR                    DSPLY DLT PNL
+     C                     ENDSR                           END DSPPNL
+      *___________________________________________________________________
+      * Process ENTER request
+      *___________________________________________________________________
+     C           PRCENT    BEGSR                           PROC ENTER RQS
+     C                     EXSR CHKDLT                     CHECK DLT ALLWD
+B001 C           WWRTN     IFEQ *BLANKS                    IF DELETE ALLOWED
+ 001 C                     EXSR DLTREC                     DELETE RECORD
+E001 C                     ENDIF                           END IF DLT ALLOWED
+      *
+B001 C           WWRTN     IFEQ *BLANKS                    IF DELETE ALLOWED
+ 001 C                     MOVE 'END'     WWSTT            END PROGRAM
+ 001 C                     MOVE *BLANKS   WORTN            RETURN GOOD DELETE
+E001 C                     ENDIF                           END IF DLT ALLOWED
+     C                     ENDSR                           END PRCENT
+      *___________________________________________________________________
+      * Delete record
+      *___________________________________________________________________
+     C           DLTREC    BEGSR                           DELETE RECORD
+     C                     CALL 'UPDDTAM '                 PROCESS REC IO
+     C                     PARM 'DELETE  'WWRQS            GET REC
+     C                     PARM           WWRTN            RETURN CODE
+     C                     PARM           WDDTAM           REC DATA
+      *
+B001 C           WWRTN     IFNE *BLANKS                    IF DELETE ERROR
+ 001 C                     MOVE WTM,1     WWMSG            GET MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MSG
+ 001 C                     MOVE 'ERROR   'WORTN            RETURN ERROR
+E001 C                     ENDIF                           END IF ERROR
+     C                     ENDSR                           END PRCENT
+      *___________________________________________________________________
+      * Check if delete allowed
+      *___________________________________________________________________
+     C           CHKDLT    BEGSR                           CHECK DELETE
+     C                     MOVE *BLANKS   WWRTN            RESET RTRN FLD
+     C                     CALL 'CHKDTAM '             99  DSPLY FNCTN KYS
+     C                     PARM 'EDTDLT  'WWRQS            DLT EDT REQUEST
+     C                     PARM           WWRTN            RETURN CODE
+     C                     PARM           WDDTAM           REC DATA
+      *
+B001 C           *IN99     IFEQ *ON                        IF BAD CALL
+ 001 C                     MOVELWTM,4     WWMSG            PASS MESSAGE
+ 001 C                     EXSR SNDMSG                     SEND MESSAGE
+ 001 C                     MOVEL'ERROR'   WORTN            RETURN ERROR
+E001 C                     ENDIF                           END ERROR
+     C                     ENDSR                           END CHECK DLT
+      *___________________________________________________________________
+      * Release the record
+      *___________________________________________________________________
+     C           RELREC    BEGSR                           RELEASE RECORD
+     C                     CALL 'UPDDTAM '                 PROCESS REC IO
+     C                     PARM 'RELEASE 'WWRQS   8        RELEASE RECORD
+     C                     PARM           WWRTN            RETURN CODE
+     C                     PARM           WDDTAM           REC DATA STRUCTURE
+     C                     ENDSR                           END RELREC
+      *___________________________________________________________________
+      * Receive messages
+      *___________________________________________________________________
+     C           RCVMSG    BEGSR                           RECEIVE MSG
+     C                     MOVEA*IN       WWIN             INDICATORS
+     C                     CALL 'PRCMSGV2'                 CALL MSG PGM
+     C                     PARM 'RECEIVE 'WWRQS            REQUEST RECEIVE
+     C                     PARM           WWIN             INDICATORS
+     C                     PARM           WWRTN            RETURN CODE
+     C                     MOVEAWWIN      *IN              INDICATORS RET
+     C                     ENDSR                           END RCV MSG
+      *___________________________________________________________________
+      * Build function key information
+      *___________________________________________________________________
+     C           BLDFKY    BEGSR                           BUILD FNC KEYS
+     C                     CALL 'PRCFKYV2'                 PROC FNC KYS
+     C                     PARM 'BUILD   'WWRQS            REQUEST PROCESS
+     C           WWFNC     PARM           WWRTN            RETURN CODE
+     C                     PARM           WAD              FNC DESC
+     C                     PARM           WDATNB           AID BYTE
+     C                     PARM           WAF              FNC KEY TABLE
+     C                     PARM           WIFKV            FNC KYS ALLWD
+      *
+     C           WWFKS     ADD  WWFKS     WW               KEY DSC IDX
+     C                     MOVELWAD,WW    WSFKD2           LOAD LINE 2
+     C                     SUB  1         WW               BUMP IDX
+     C                     MOVELWAD,WW    WSFKD1           LOAD LINE 1
+     C                     ENDSR                           END BLD FNCTNS
+      *___________________________________________________________________
+      * Process function keys
+      *___________________________________________________________________
+     C           PRCFKY    BEGSR                           PROC FNCTN KEYS
+     C                     CALL 'PRCFKYV2'                 PROC FNCTN KYS
+     C                     PARM 'PROCESS 'WWRQS            REQUEST PROCESS
+     C           WWFNC     PARM           WWRTN            RETURN CODE
+     C                     PARM           WAD              FNC DESC
+     C                     PARM           WDATNB           AID BYTE
+     C                     PARM           WAF              FNCTN KEY TABLE
+     C                     PARM           WIFKV            FNCTN KYS ALLWD
+     C                     ENDSR                           END PROC FNCTNS
+      *___________________________________________________________________
+      * Process EXIT function
+      *___________________________________________________________________
+     C           PRCEXT    BEGSR                           EXIT
+     C                     EXSR RELREC                     RELEASE RECORD
+     C                     MOVELWWFNC     WORTN            RETURN CODE
+     C                     MOVE 'END'     WWSTT            END INVOCATION
+     C                     ENDSR                           END RETURN
+      *___________________________________________________________________
+      * Process CANCEL function
+      *___________________________________________________________________
+     C           PRCCNL    BEGSR                           CANCEL
+     C                     EXSR RELREC                     RELEASE RECORD
+     C                     MOVELWWFNC     WORTN            RETURN CODE
+     C                     MOVE 'END'     WWSTT            END INVOCATION
+     C                     ENDSR                           END RETURN
+      *___________________________________________________________________
+      * Send message
+      *___________________________________________________________________
+     C           SNDMSG    BEGSR                           SEND MESSAGE
+     C                     CALL 'QSNDDTAQ'                 SEND MESSAGE
+     C                     PARM 'MSGDTAQ' WWDTAQ 10        DATA QUEUE NAME
+     C                     PARM 'QTEMP'   WWLIB  10        DATA QUEUE LIB
+     C                     PARM 80        WWLNGQ  50       MESSAGE LENGTH
+     C                     PARM           WWMSG  80        ERROR MESSAGE
+     C                     ENDSR                           END PROC FNC
+      *___________________________________________________________________
+      * Parameter lists
+      *___________________________________________________________________
+     C           PLIST     BEGSR                           PARM LISTS
+     C           *ENTRY    PLIST                           *ENTRY LIST
+     C                     PARM           WIRQS   8        EXT MODE
+     C                     PARM           WORTN   8        INTERNAL MODE
+     C                     PARM           WUPGM  10        LAST PGM NAME
+     C                     PARM           WDDTAM           RECORD DS
+     C                     PARM           WIFKV  60        FUNCTIONS VALID
+     C                     ENDSR                           END PLIST
+      *___________________________________________________________________
+      * Initialize routine
+      *___________________________________________________________________
+     C           *INZSR    BEGSR                           INITIALIZE
+     C           *LIKE     DEFN WORTN     WWFNC            FUNCTION CODE
+     C           *LIKE     DEFN WORTN     WWOPT            OPTION CODE
+     C           *LIKE     DEFN WIFKV     WWFKV            FUNCTIONS VALID
+     C           *LIKE     DEFN WIFKV     WWOPV            OPTIONS VALID
+     C                     MOVE *BLANKS   WWIN   99        INDICATOR FIELD
+     C                     Z-ADD1         WWFKS   10       FNC KEY SET
+     C                     Z-ADD*ZEROS    WW      30       WORK INDEX
+     C                     MOVEL'*'       MSPGMQ           JOB'S MSGQ
+     C                     MOVE *BLANKS   WWSTT   3        LOOP CONTROL
+     C                     MOVE *BLANKS   WWRTN   8        RETURN CODE
+      * \STRSRC DEFN - Modification point for defines
+      * \ENDSRC DEFN
+     C                     ENDSR                           END *INZSR
+      *___________________________________________________________________
+      * Program error handler
+      *___________________________________________________________________
+     C           *PSSR     BEGSR                           PROGRAM ERROR
+     C                     CALL 'SNDRPGM'              50  SEND RPG MSG
+     C                     PARM           WQPGMN           PROGRAM NAME
+     C                     PARM           WQSTSC           STATUS CODE
+     C                     PARM           WQRPGS           RPG STATEMENT
+     C                     PARM           WQMSG            MESSAGE ID
+     C                     ENDSR'*CANCL'                   END PGM ERROR
+      *___________________________________________________________________
+      * \STRSRC CSRSPEC - Modification point for subroutines
+      * \ENDSRC CSRSPEC
+      *___________________________________________________________________
+**  WAF FUNCTION KEY TABLE - 30X40      |INDICATOR 2.0, ACTION8A, DESCR 30A    |
+03EXIT    F3=Exit
+12CANCEL  F12=Cancel
+** WTM
+00Record not deleted. No longer available.
+00Example Application Data record not found.
+00Call to UPDDTAM failed.  Example Application Data not deleted.
+00Call to CHKDTAM failed.  Example Application Data not checked.
+00Call to DLTNOT failed.  Notes were not deleted.
+00Request not supported in program DLTDTAM
+00Detail records not deleted.  Header cannot be deleted.
+

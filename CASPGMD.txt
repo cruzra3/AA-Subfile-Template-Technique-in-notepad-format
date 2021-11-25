@@ -1,0 +1,38 @@
+      *----------------------------------------------------------------***
+      *
+      *  Description:
+      *    Program Status Data Structure
+      *
+      *    Note:  This data structure must be compiled (using CRTPF) with
+      *           the name CASPGMD as referenced in various programs within
+      *           the application.
+      *
+      *  Written for CAS by:
+      *    BG         09/09/89
+      *
+      *  (c)Copyright 1989, 1994 by Computer Applications Specialists, Inc.
+      *  This document contains restricted materials of CAS, Inc.
+      *
+      *-------------------------------------------------------------------
+     A          R PGMD
+     A            WQPGMN        10          COLHDG('Program name')
+     A            WQSTSC         5S 0       COLHDG('Status code')
+     A            WQSTSP         5S 0       COLHDG('Previous status code')
+     A            WQRPGS         8          COLHDG('RPG source statement')
+     A            WQRPGR         8          COLHDG('RPG routine')
+     A            WQPRM          3S         COLHDG('Number of parameters')
+     A            WQMSG          7          COLHDG('Message ID')
+     A            WQINS          4          COLHDG('Insturuction number')
+     A            WQMSGW        30          COLHDG('Message work area')
+     A            WQLIBN        10          COLHDG('Library name')
+     A            WQMSGD        80          COLHDG('Exception data /' +
+     A                                             'CPF error message')
+     A            WQEXC          4          COLHDG('Exception ID')
+     A            WQNON         26          COLHDG('Unused')
+     A            WQLSTF         8          COLHDG('Last file used')
+     A            WQSTSF        35          COLHDG('File status ')
+     A            WQJOBN        10          COLHDG('Job name')
+     A            WQUSRN        10          COLHDG('User name')
+     A            WQJOB#         6S 0       COLHDG('Job number')
+     A            WQENTD         6S 0       COLHDG('Job entered date')
+
